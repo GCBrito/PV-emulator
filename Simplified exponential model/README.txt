@@ -7,7 +7,7 @@ This emulator is based on a simplified exponential mathematical model. To config
 
 This folder contains one MATLAB script:
 
-- "tracer_simplified_exponential_model.m": Plots the emulated operating points and the PV emulator’s testing points, and compares them to the theoretical I–V curve.
+- "tracer_simplified_exponential_model.m": Plots the emulated operating points as well as the PV emulator’s testing points and the load lines, and compares them to the theoretical I–V curve.
 
 *Usage instructions:*
 
