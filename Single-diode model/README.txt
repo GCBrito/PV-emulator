@@ -19,4 +19,4 @@ This folder contains two MATLAB scripts:
 
 *Usage instructions:*
 
-To use the emulator, begin by running "tracer_single_diode_emulator.m" to compute the five model parameters. Once obtained, these parameters must be manually inserted into main.cpp before uploading the firmware to the SPIN board
+To use the emulator, begin by running "tracer_single_diode_emulator.m" to compute the five model parameters. Once obtained, these parameters must be manually inserted into main.cpp before uploading the firmware to the SPIN board.
