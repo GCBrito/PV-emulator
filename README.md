@@ -20,10 +20,10 @@ The **PCB** (Printed Circuit Board) used for the PV emulator consists of two dis
 
 - **SPIN (Control Stage)** — handles control and measurement.
 - **TWIST (Power Stage)** — provides the power conversion stage.
-  
-  <img width="2048" height="1365" alt="image" src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4" />
 
 All electronic schematics related to these boards are available on the foundation’s GitHub repository [OwnTech Foundation GitHub](https://github.com/owntech-foundation)
+  
+  <img width="2048" height="1365" alt="image" src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4" />
 
 ## SPIN Board
 
