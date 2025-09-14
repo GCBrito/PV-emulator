@@ -7,7 +7,7 @@ It includes the following folders:
 - **Experimental Data** — all datasets from laboratory tests.  
 - **Emulators comparison** — a MATLAB algorithm to evaluate and compare the performance of all emulators.  
 
-# PV Emulator
+# _PV Emulator_
 
 A Photovoltaic (PV) module is a system composed of semiconductor materials capable of converting solar energy into electricity. From an electrical perspective, when environmental conditions are sufficient, connecting a load to a PV panel automatically subjects it to a DC (Direct Current) voltage and current. This principle is best illustrated by examining the current–voltage (I–V) plane, as shown in the figure below:
 
@@ -25,7 +25,7 @@ It is also possible, however, to design a system capable of reproducing this sam
 
 A PV emulator is a system that replicates the electrical characteristics of a real solar panel. In other words, for a given resistive load R, it delivers the same voltage and current (_V*_,_I*_) that the load would receive if it were directly connected to a PV module. Unlike a real PV panel, though, the operating point (_V*_,_I*_) cannot be achieved naturally and requires a dedicated control strategy, described in the section *Emulation Strategy*. It should also be emphasized that, unlike an actual PV module, a PV emulator does not convert solar energy into electricity. Instead, it relies on an external electrical supply (referred to as the DC source in the figure) as its power input.
 
-# OwnTech
+# _OwnTech_
 
 [OwnTech](https://owntech.io) is a company based in Toulouse whose mission is to **democratize power electronics** through open-source technologies.  
 The implementation of this PV emulator using the OwnTech solution is motivated by its strong commitment to openness, ensuring compatibility and access to **open-hardware** and **open-software** solutions.  
