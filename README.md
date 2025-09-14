@@ -47,10 +47,7 @@ All electronic schematics related to these boards are available on the foundatio
 
 ### SPIN Board
 
-The **SPIN board** integrates an **STM32 microcontroller** that:  
-- Generates the **PWM (Pulse Width Modulation)** signals required to drive the switches.  
-- Processes measurements from the sensors embedded in the power stage.  
-- Provides real-time access to input and output **current** and **voltage** values.
+The **SPIN board** integrates an STM32 microcontroller that generates the PWM (Pulse Width Modulation) signals required to drive the switches present in the TWIST board, processes measurements from the sensors embedded in the Power Stage, and provides real-time access to input and output current and voltage values.
 
 <p align="center">
 <img width="400" height="300" alt="Adobe Express - file" src="https://github.com/user-attachments/assets/090d9a0e-13fb-443f-be09-a5b10a50856c" />
