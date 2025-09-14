@@ -67,8 +67,6 @@ The **TWIST board** can be configured to operate in three main topologies:
 <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/46f266ec-21d0-4aaf-af63-a85be75b0c3b" />
 </p>
 
-### Operating Ranges
-
 The TWIST converter supports the following input/output ranges:
 
 - **V<sub>high</sub>**: 12 – 100 V  
