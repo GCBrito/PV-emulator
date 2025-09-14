@@ -1,13 +1,13 @@
 As previously explained, the electrical behavior of a photovoltaic (PV) panel is generally represented by its **current–voltage (I–V) characteristic curve**, as illustrated in the next figure:
 
-<img width="1118" height="602" alt="Courbe caractéristique" src="https://github.com/user-attachments/assets/67c87c0e-fbee-4427-a6e2-9b1c867d8de6" />
+<img width="800" height="500" alt="Courbe caractéristique" src="https://github.com/user-attachments/assets/67c87c0e-fbee-4427-a6e2-9b1c867d8de6" />
 
 In this figure, four key parameters can be identified:
 
-- **_V<sub>oc</sub>_**: Open-circuit voltage  
-- **_I<sub>sc</sub>_**: Short-circuit current  
-- **_V<sub>MPP</sub>_**: Voltage at the maximum power point  
-- **_I<sub>MPP</sub>_**: Current at the maximum power point  
+- **_V<sub>oc</sub>_** - Open-circuit voltage  
+- **_I<sub>sc</sub>_** - Short-circuit current  
+- **_V<sub>MPP</sub>_** - Voltage at the maximum power point  
+- **_I<sub>MPP</sub>_** - Current at the maximum power point  
 
 These parameters mainly depend on the intrinsic properties of the PV cells. However, external factors such as **shading, temperature, and environmental conditions** can also affect the overall performance of the module.  
 
