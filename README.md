@@ -23,7 +23,7 @@ The **PCB** (Printed Circuit Board) used for the PV emulator consists of two dis
 
 All electronic schematics related to these boards are available on the foundation’s GitHub repository [OwnTech Foundation GitHub](https://github.com/owntech-foundation)
   
-  <img width="2048" height="1365" alt="image" src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4" />
+  <img width="1500" height="800" alt="image" src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4" />
 
 ### SPIN Board
 
@@ -67,7 +67,7 @@ It is also possible, however, to design a system capable of reproducing this sam
 
 <img width="1374" height="483" alt="Emulator" src="https://github.com/user-attachments/assets/88b33ebe-240c-4d69-b906-b29596ad4287" />
 
-A Photovoltaic (PV) emulator is a system that replicates the electrical characteristics of a real solar panel. In other words, for a given resistive load R, it delivers the same voltage and current (_V*_,_I*_) that the load would receive if it were directly connected to a PV module. Unlike a real PV panel, though, the operating point (_V*_,_I*_) cannot be achieved naturally and requires a dedicated control strategy, described in the section *Emulation Strategy*. It should also be emphasized that, unlike an actual PV module, a PV emulator does not convert solar energy into electricity. Instead, it relies on an external electrical supply (referred to as the DC source in the figure) as its power input.
+A PV emulator is a system that replicates the electrical characteristics of a real solar panel. In other words, for a given resistive load R, it delivers the same voltage and current (_V*_,_I*_) that the load would receive if it were directly connected to a PV module. Unlike a real PV panel, though, the operating point (_V*_,_I*_) cannot be achieved naturally and requires a dedicated control strategy, described in the section *Emulation Strategy*. It should also be emphasized that, unlike an actual PV module, a PV emulator does not convert solar energy into electricity. Instead, it relies on an external electrical supply (referred to as the DC source in the figure) as its power input.
 
 
 
