@@ -22,8 +22,10 @@ The **PCB** (Printed Circuit Board) used for the PV emulator consists of two dis
 - **TWIST (Power Stage)** — provides the power conversion stage.
 
 All electronic schematics related to these boards are available on the foundation’s GitHub repository [OwnTech Foundation GitHub](https://github.com/owntech-foundation)
-  
-  <img width="1000" height="500" alt="image" src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4" />
+
+<p align="center">
+<img width="1000" height="500" alt="image" src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4" />
+</p>
 
 ### SPIN Board
 
@@ -32,8 +34,9 @@ The **SPIN board** integrates an **STM32 microcontroller** that:
 - Processes measurements from the sensors embedded in the power stage.  
 - Provides real-time access to input and output **current** and **voltage** values.
 
-  <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/e2c93b84-2b84-4ae3-9168-859036231f40" />
-
+<p align="center">
+<img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/e2c93b84-2b84-4ae3-9168-859036231f40" />
+</p>
 
 ### TWIST Board
 
@@ -42,8 +45,9 @@ The **TWIST board** can be configured to operate in three main topologies:
 - Synchronous **Boost converter**  
 - **Single-phase inverter**
 
-  <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/46f266ec-21d0-4aaf-af63-a85be75b0c3b" />
-
+<p align="center">
+<img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/46f266ec-21d0-4aaf-af63-a85be75b0c3b" />
+</p>
 
 ### Operating Ranges
 
@@ -59,13 +63,17 @@ These ranges define the **power limits of the PV emulator** described in this re
 
 A Photovoltaic (PV) module is a system composed of semiconductor materials capable of converting solar energy into electricity. From an electrical perspective, when environmental conditions are sufficient, connecting a load to a PV panel automatically subjects it to a DC (Direct Current) voltage and current. This principle is best illustrated by examining the current–voltage (I–V) plane, as shown in the figure below:
 
+<p align="center">
 <img width="500" height="1000" alt="I-V plan" src="https://github.com/user-attachments/assets/93737631-7bcd-4a1c-89a6-baca75cddae9" />
-
+</p>
+  
 In this plane, the red curve represents the **I–V characteristic**, which describes the electrical behavior of a PV module (each module has its own curve) under given temperature and irradiance conditions. The blue line, known as the **load line**, corresponds to the resistive load R connected to the module. Its slope, defined by Ohm’s Law, is equal to the inverse of the resistance value. When a resistive load is connected to a PV panel, the operating point of the system is determined by the intersection between the module’s I–V curve and the load line. This point, denoted as (_V*_,_I*_), specifies the voltage _V*_ across the load and the current _I*_ flowing through it. In a real PV panel, this operating point is reached naturally, without external intervention. 
 
 It is also possible, however, to design a system capable of reproducing this same electrical behavior: a **_PV emulator_**. The emulator proposed in this repository is based on OwnTech technology and can be represented by the following diagram:
 
+<p align="center">
 <img width="400" height="300" alt="Emulator" src="https://github.com/user-attachments/assets/88b33ebe-240c-4d69-b906-b29596ad4287" />
+</p>
 
 A PV emulator is a system that replicates the electrical characteristics of a real solar panel. In other words, for a given resistive load R, it delivers the same voltage and current (_V*_,_I*_) that the load would receive if it were directly connected to a PV module. Unlike a real PV panel, though, the operating point (_V*_,_I*_) cannot be achieved naturally and requires a dedicated control strategy, described in the section *Emulation Strategy*. It should also be emphasized that, unlike an actual PV module, a PV emulator does not convert solar energy into electricity. Instead, it relies on an external electrical supply (referred to as the DC source in the figure) as its power input.
 
