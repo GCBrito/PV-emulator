@@ -23,7 +23,7 @@ The **PCB** (Printed Circuit Board) used for the PV emulator consists of two dis
 
 All electronic schematics related to these boards are available on the foundation’s GitHub repository [OwnTech Foundation GitHub](https://github.com/owntech-foundation)
   
-  <img width="1500" height="800" alt="image" src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4" />
+  <img width="1000" height="500" alt="image" src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4" />
 
 ### SPIN Board
 
