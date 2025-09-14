@@ -53,7 +53,7 @@ The **SPIN board** integrates an **STM32 microcontroller** that:
 - Provides real-time access to input and output **current** and **voltage** values.
 
 <p align="center">
-<img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/e2c93b84-2b84-4ae3-9168-859036231f40" />
+<img width="400" height="300" alt="Adobe Express - file" src="https://github.com/user-attachments/assets/090d9a0e-13fb-443f-be09-a5b10a50856c" />
 </p>
 
 ### TWIST Board
