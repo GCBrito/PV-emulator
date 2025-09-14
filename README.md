@@ -23,7 +23,7 @@ It is also possible, however, to design a system capable of reproducing this sam
 <img width="500" height="400" alt="Emulator" src="https://github.com/user-attachments/assets/88b33ebe-240c-4d69-b906-b29596ad4287" />
 </p>
 
-A PV emulator is a system that replicates the electrical characteristics of a real solar panel. In other words, for a given resistive load R, it delivers the same voltage and current (_V*_,_I*_) that the load would receive if it were directly connected to a PV module. Unlike a real PV panel, though, the operating point (_V*_,_I*_) cannot be achieved naturally and requires a dedicated control strategy, described in the section *Emulation Strategy*. It should also be emphasized that, unlike an actual PV module, a PV emulator does not convert solar energy into electricity. Instead, it relies on an external electrical supply (referred to as the DC source in the figure) as its power input.
+A PV emulator is a system that replicates the electrical characteristics of a real solar panel. In other words, for a given resistive load R, it delivers the same voltage and current (_V*_,_I*_) that the load would receive if it were directly connected to a PV module. Unlike a real PV panel, though, the operating point (_V*_,_I*_) cannot be achieved naturally and requires a dedicated control strategy, described in [Emulation-Strategy](https://github.com/GCBrito/PV-emulator/blob/main/Emulation-Strategy.md). It should also be emphasized that, unlike an actual PV module, a PV emulator does not convert solar energy into electricity. Instead, it relies on an external electrical supply (referred to as the DC source in the figure) as its power input.
 
 # _OwnTech_
 
