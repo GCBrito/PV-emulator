@@ -32,7 +32,7 @@ The **SPIN board** integrates an **STM32 microcontroller** that:
 - Processes measurements from the sensors embedded in the power stage.  
 - Provides real-time access to input and output **current** and **voltage** values.
 
-  <img width="1000" height="500" alt="image" src="https://github.com/user-attachments/assets/e2c93b84-2b84-4ae3-9168-859036231f40" />
+  <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/e2c93b84-2b84-4ae3-9168-859036231f40" />
 
 
 ### TWIST Board
