@@ -105,13 +105,13 @@ $$
 
 If the error calculated according to this equation exceeds **2%** for two consecutive cycles of the periodic task (i.e., a total of 1000 µs), the algorithm detects a load change and reinitializes the voltage reference to duty cycle to _V<sub>s0</sub>_, thereby **restarting** the adaptation process. It is important to note that this persistent error condition over two cycles prevents transient variations caused by noise or ripple from being mistaken for an actual load change.
 
-To facilitate the understanding of the **Emulator Mode** logic, the following figure illustrates the operation of the emulator in the I–V plane:
+To facilitate the understanding of the Emulator Mode logic, the following figure illustrates the operation of the emulator in the I–V plane:
 
 <p align="center">
 <img width="500" height="1000" alt="Emulator_Working" src="https://github.com/user-attachments/assets/a981126c-f72d-4fa1-8829-520670ffce35" />
 </p>
 
-In this image, the numbered points represent the key steps of the **Emulator Mode** operation:
+In this image, the numbered points represent the key steps of the Emulator Mode operation:
 
 1. The initial voltage reference _V<sub>s0</sub>_ is applied on the load, generating a load line passing through the origin.  
 2. The PID then adjusts the duty cycle (_α<sub>1</sub><sup>*</sup>_) to reach the operating point (_V<sub>s,1</sub><sup>*</sup>_, _I<sub>s,1</sub><sup>*</sup>_) on the I–V curve.  
@@ -119,6 +119,7 @@ In this image, the numbered points represent the key steps of the **Emulator Mod
 4. If the relative error between the previous load and the candidate load exceeds 2% for two consecutive cycles, the system detects a load change and reinitializes the voltage reference to _V<sub>s0</sub>_ .  
 5. The emulation process restart, allowing the system to operate again as a PV emulator.
 
+The section [Operation](https://github.com/GCBrito/PV-emulator/blob/main/Operation.md) was organized to support the use of the developed emulator in a laboratory environment.
 
 
 
