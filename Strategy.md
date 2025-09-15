@@ -108,7 +108,7 @@ In this image, the numbered points represent the key steps of the Emulator Mode 
 4. If the relative error between the previous load and the candidate load exceeds 2% for two consecutive cycles, the system detects a load change and reinitializes the voltage reference to _V<sub>s0</sub>_ .  
 5. The emulation process restart, allowing the system to operate again as a PV emulator.
 
-The section [Operation](https://github.com/GCBrito/PV-emulator/blob/main/Operation.md) was organized to support the use of the developed emulator in a laboratory environment.
+The section [**Tutorial**](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md) was organized to support the use of the developed emulator in a laboratory environment.
 
 
 
