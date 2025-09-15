@@ -1,4 +1,10 @@
-This emulator is based on the single-diode model, a widely used and well-validated approach:
+# _Emulator's Principle_
+
+This repository presents a C++ algorithm that allow the OwnTech board to perfom as PV emulator that can reproduce the behavior of any PV module, but only at the operating points **STC** (Standard Test Conditions — 1000 W/m² solar irradiance, AM1.5 spectrum and cell temperature of 25 °C) or **NOTC** (Normal Operating Test Conditions — 800 W/m² solar irradiance, AM1.5 spectrum, cell temperature of 20 °C and wind speed of 1 m/s). This limitation arises because the emulator is based on the **simplified exponential model**, a mathematical model that reconstructs the I–V characteristic curve of a PV module using parameters provided in the manufacturer’s datasheet. However, since datasheets typically list these values only at STC or NOTC, the emulator cannot accurately represent the electrical behavior of a PV module under different irradiance or temperature conditions.
+
+# Simplified exponencial model
+
+The previously mentioned electrical model is a widely used and well-validated approach:
 
 <p align="center">
 <img width="500" height="300" alt="Single-diode Model" src="https://github.com/user-attachments/assets/9f7884e0-ffcf-4c9f-9f6b-d501deca426f" />
@@ -41,7 +47,6 @@ I_{PH}^{ref} &- \frac{2 V_{MP}}{R_P} - I_{S0}^{ref}\Big(\big[1+\tfrac{q (V_{MP}-
 \end{aligned}
 $$
 
-
 In this system, the remaining parameters are:
 
 - _V<sub>OC</sub>_ — open-circuit voltage at the reference operating point [V]  
@@ -49,8 +54,7 @@ In this system, the remaining parameters are:
 - _V<sub>MPP</sub>_ — voltage at the maximum power point at the reference operating point [V]  
 - _I<sub>MPP</sub>_ — current at the maximum power point at the reference operating point [A]
 
-Through these equations, the I–V characteristic curve of any PV module can be determined.  
-The single-diode model differs from the [simplified exponential model](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) because it accounts for the influence of both temperature and irradiance on the PV panel. This makes it possible to emulate the module under any operating condition, whereas the simplified model only allowed simulation at STC or NOTC.
+Through these equations, the I–V characteristic curve of any PV module can be determined. The single-diode model differs from the [simplified exponential model](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) because it accounts for the influence of both temperature and irradiance on the PV panel. This makes it possible to emulate the module under any operating condition, whereas the simplified model only allowed simulation at STC or NOTC.
 
 # _Algorithms_
 
