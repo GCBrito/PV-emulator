@@ -1,4 +1,18 @@
-This emulator is based on the single-diode mathematical model. To configure the emulation, the user must specify the photovoltaic (PV) module to replicate and define the desired operating point by providing the following input parameters:
+This emulator is based on the single-diode mathematical model:
+
+$$
+I_{pv} = I_{PH}^{ref} \left( \frac{S}{S^{ref}} \right)
++ \mu_{ICC}(T - T^{ref})
+- \frac{R_S I_{pv} + V_{pv}}{R_P}
+- I_{S0}^{ref} \left( \frac{T}{T^{ref}} \right)^3
+e^{\frac{qE_G}{Ak}\left(\frac{1}{T^{ref}} - \frac{1}{T}\right)}
+\left[
+e^{\frac{q(R_S I_{pv} + V_{pv})}{AkT}} - 1
+\right]
+$$
+
+
+ To configure the emulation, the user must specify the photovoltaic (PV) module to replicate and define the desired operating point by providing the following input parameters:
 
 - ns: number of cells in series
 - np: number of parallel strings
