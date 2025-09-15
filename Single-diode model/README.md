@@ -37,9 +37,9 @@ $$
 \begin{aligned}
 I_{SC} &= I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q R_S I_{SC}}{A k T^{ref}}} - 1\big) - \frac{R_S I_{SC}}{R_P} \\
 0 &= I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q V_{OC}}{A k T^{ref}}} - 1\big) - \frac{V_{OC}}{R_P} \\
-I_{MPP} &= I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q (R_S I_{MPP}+V_{MPP})}{A k T^{ref}}} - 1\big) - \frac{R_S I_{MPP}+V_{MPP}}{R_P} \\
+I_{MPP} &= I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q (R_S I_{MP}+V_{MP})}{A k T^{ref}}} - 1\big) - \frac{R_S I_{MP}+V_{MP}}{R_P} \\
 R_S &+ \frac{q I_{S0}^{ref} R_P (R_S - R_P)}{A k T^{ref}}\ e^{\tfrac{q I_{SC}}{A k T^{ref}}} = 0 \\
-I_{PH}^{ref} &- \frac{2 V_{MPP}}{R_P} - I_{S0}^{ref}\Big(\big[1+\tfrac{q (V_{MPP}-R_S I_{MPP})}{A k T^{ref}}\big]\ e^{\tfrac{q (R_S I_{MPP}+V_{MPP})}{A k T^{ref}}} - 1\Big) = 0
+I_{PH}^{ref} &- \frac{2 V_{MP}}{R_P} - I_{S0}^{ref}\Big(\big[1+\tfrac{q (V_{MP}-R_S I_{PP})}{A k T^{ref}}\big]\ e^{\tfrac{q (R_S I_{MP}+V_{MP})}{A k T^{ref}}} - 1\Big) = 0
 \end{aligned}
 $$
 
@@ -57,15 +57,15 @@ The single-diode model differs from the [simplified exponential model](https://g
 
 The algorithms in this repository enable the implementation of the single-diode model on the PV emulator.  To use this emulator, the user must specify the PV module to be replicated and define the desired operating point by providing the following input parameters, which are typically available in manufacturers’ datasheets:
 
-- **n<sub>s</sub>** — number of cells in series [–]  
-- **n<sub>p</sub>** — number of parallel strings [–]  
-- **V<sub>MPP,mod</sub>** — module voltage at the maximum power point under the reference operating condition [V]  
-- **I<sub>MPP,mod</sub>** — module current at the maximum power point under the reference operating condition [A]  
-- **V<sub>OC,mod</sub>** — module open-circuit voltage under the reference operating condition [V]  
-- **I<sub>SC,mod</sub>** — module short-circuit current under the reference operating condition [A]  
-- **T<sub>ref</sub>** — reference temperature [K]  
-- **S<sub>ref</sub>** — reference irradiance [W/m²]  
-- **μ<sub>ICC</sub>** — temperature coefficient of the short-circuit current [A/°C or A/K]  
+- **ns** — number of cells in series [–]  
+- **np** — number of parallel strings [–]  
+- **VMPmod** — module voltage at the maximum power point under the reference operating condition [V]  
+- **IMPmod** — module current at the maximum power point under the reference operating condition [A]  
+- **VOCmod** — module open-circuit voltage under the reference operating condition [V]  
+- **ISCmod** — module short-circuit current under the reference operating condition [A]  
+- **Tref** — reference temperature [K]  
+- **Sref** — reference irradiance [W/m²]  
+- **muICC>** — temperature coefficient of the short-circuit current [A/°C or A/K]  
 - **T** — operating temperature [K]  
 - **S** — operating irradiance [W/m²]  
 
