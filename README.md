@@ -13,7 +13,7 @@ The following reading order is recommended for readers who are not yet familiar 
 2) [**Strategy**](https://github.com/GCBrito/PV-emulator/blob/main/Strategy.md) — describes the proposed emulation strategy.  
 3) [**Simplified exponential model README**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) — explains the simplified exponential model and how the corresponding emulator works.  
 4) [**Single-diode model README**](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model) — explains the single-diode model and how the corresponding emulator works.  
-5) [**Operation**](https://github.com/GCBrito/PV-emulator/blob/main/Operation.md) — provides instructions on how to use the emulator in a laboratory environment.
+5) [**Tutorial**](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md) — provides instructions on how to use the emulator in a laboratory environment.
  
 # _PV Emulator_
 
