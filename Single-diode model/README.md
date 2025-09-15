@@ -1,4 +1,4 @@
-This emulator is based on the single-diode mathematical model, shown by the following figure:
+This emulator is based on the single-diode mathematical model, a widely used and well-validated approach.
 
 <p align="center">
 <img width="500" height="300" alt="Single-diode Model" src="https://github.com/user-attachments/assets/9f7884e0-ffcf-4c9f-9f6b-d501deca426f" />
@@ -71,8 +71,8 @@ The algorithms in this repository enable the implementation of the single-diode 
 
 This folder contains two MATLAB scripts:
 
-- "tracer_single_diode_emulator.m": Determines the five parameters required for the single-diode model by solving the nonlinear system of equations. Additionally, it can plot both the emulated operating points as well as the PV emulator’s testing points and the load lines, and compare them to the theoretical I–V curve.
-- "comparison_single_diode_emulator_real_pv.m": Compares the emulated I–V curve to experimental data from a real PV module.
+- "tracer_single_diode_emulator.m" — Determines the five parameters required for the single-diode model by solving the nonlinear system of equations. Additionally, it can plot both the emulated operating points as well as the PV emulator’s testing points and the load lines, and compare them to the theoretical I–V curve.
+- "comparison_single_diode_emulator_real_pv.m" — Compares the emulated I–V curve to experimental data from a real PV module.
 
 # _Usage instructions_
 
