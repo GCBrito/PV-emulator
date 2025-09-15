@@ -17,7 +17,7 @@ A Photovoltaic (PV) module is a system composed of semiconductor materials capab
   
 In this plane, the red curve represents the **I–V characteristic**, which describes the electrical behavior of a PV module (each module has its own curve) under given temperature and irradiance conditions. The blue line, known as the **load line**, corresponds to the resistive load R connected to the module. Its slope, defined by Ohm’s Law, is equal to the inverse of the resistance value. When a resistive load is connected to a PV panel, the operating point of the system is determined by the intersection between the module’s I–V curve and the load line. This point, denoted as (_V*_,_I*_), specifies the voltage _V*_ across the load and the current _I*_ flowing through it. In a real PV panel, this operating point is reached naturally, without external intervention. 
 
-It is also possible, however, to design a system capable of reproducing this same electrical behavior: a **_PV emulator_**. The emulator proposed in this repository is based on OwnTech technology and can be represented by the following diagram:
+It is also possible, however, to design a system capable of reproducing this same electrical behavior: a **PV emulator**. The emulator proposed in this repository is based on OwnTech technology and can be represented by the following diagram:
 
 <p align="center">
 <img width="500" height="400" alt="Emulator" src="https://github.com/user-attachments/assets/88b33ebe-240c-4d69-b906-b29596ad4287" />
