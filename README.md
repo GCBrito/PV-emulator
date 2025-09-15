@@ -1,12 +1,20 @@
 
-This repository provides algorithms and resources to use an OwTech board as a **photovoltaic (PV) emulator**.  
-It includes the following folders:
+This repository provides algorithms and resources to use an OwnTech board as a **photovoltaic (PV) emulator**.  It includes the following folders:
 
 - **Single-diode model** — the most complete version of the PV emulator.  
-- **Simplified exponential model** — a simpler version of the PV emulator.  
-- **Experimental Data** — all datasets from laboratory tests.  
-- **Emulators comparison** — a MATLAB algorithm to evaluate and compare the performance of all emulators.  
+- **Simplified exponential model** — a simplified version of the PV emulator.  
+- **Experimental Data** — datasets collected from laboratory tests.  
+- **Emulators comparison** — a MATLAB algorithm to evaluate and compare the performance of the different emulators.  
 
+To better understand the algorithms presented in this repository, a set of text files has been organized.  
+The following reading order is recommended for readers who are not yet familiar with this work:
+
+- [**Main README**](https://github.com/GCBrito/PV-emulator/tree/main) — introduces the concept of a PV emulator and presents the OwnTech technology.  
+- [**Strategy**](https://github.com/GCBrito/PV-emulator/blob/main/Strategy.md) — describes the proposed emulation strategy.  
+- [**Simplified exponential model README**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) — explains the simplified exponential model and how the corresponding emulator works.  
+- [**Single-diode model README**](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model) — explains the single-diode model and how the corresponding emulator works.  
+- [**Operation**](https://github.com/GCBrito/PV-emulator/blob/main/Operation.md) — provides instructions on how to use the emulator in a laboratory environment.
+ 
 # _PV Emulator_
 
 A Photovoltaic (PV) module is a system composed of semiconductor materials capable of converting solar energy into electricity. From an electrical perspective, when environmental conditions are sufficient, connecting a load to a PV panel automatically subjects it to a DC (Direct Current) voltage and current. This principle is best illustrated by examining the current–voltage (I–V) plane, as shown in the figure below:
