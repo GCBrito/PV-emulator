@@ -1,4 +1,4 @@
-This emulator is based on the single-diode mathematical model, a widely used and well-validated approach:
+This emulator is based on the single-diode model, a widely used and well-validated approach:
 
 <p align="center">
 <img width="500" height="300" alt="Single-diode Model" src="https://github.com/user-attachments/assets/9f7884e0-ffcf-4c9f-9f6b-d501deca426f" />
