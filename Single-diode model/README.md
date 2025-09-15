@@ -31,8 +31,6 @@ It can be observed that the current _I<sub>pv</sub>_ is a function of itself, of
 
 From mathematical theory, it is known that solving a system with five unknowns requires five independent equations. Therefore, to solve the PV current equation, it is first necessary to determine the following system of equations:
 
-The system of equations is given by:
-
 $$
 \begin{aligned}
 I_{PH}^{ref} &- I_{S0}^{ref}\big(e^{\tfrac{q R_S I_{SC}}{A k T^{ref}}} - 1\big) - \frac{R_S I_{SC}}{R_P} &= I_{SC} \\
