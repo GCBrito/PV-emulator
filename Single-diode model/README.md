@@ -66,11 +66,11 @@ The algorithms in this repository enable the implementation of the single-diode 
 - **ISCmod** — module short-circuit current under the reference operating condition [A]  
 - **Tref** — reference temperature [K]  
 - **Sref** — reference irradiance [W/m²]  
-- **muICC>** — temperature coefficient of the short-circuit current [A/°C or A/K]  
+- **muICC** — temperature coefficient of the short-circuit current [A/°C or A/K]  
 - **T** — operating temperature [K]  
 - **S** — operating irradiance [W/m²]  
 
-This folder contains two MATLAB scripts:
+This folder contains two **MATLAB** scripts:
 
 - "tracer_single_diode_emulator.m" — Determines the five parameters required for the single-diode model by solving the nonlinear system of equations. Additionally, it can plot both the emulated operating points as well as the PV emulator’s testing points and the load lines, and compare them to the theoretical I–V curve.
 - "comparison_single_diode_emulator_real_pv.m" — Compares the emulated I–V curve to experimental data from a real PV module.
