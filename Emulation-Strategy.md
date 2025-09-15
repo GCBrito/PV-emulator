@@ -25,8 +25,8 @@ These parameters mainly depend on the intrinsic properties of the PV cells. Howe
 
 This curve can be modeled using mathematical functions, and several models have been proposed in the literature. In this context, this repository considers two main mathematical models for I–V curves:
 
-- **Simplified exponential model**  
-- **Single-diode model**
+- [**Simplified exponential model**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model)  
+- [**Single-diode model**](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model)
 
 Regardless of which of these two models is considered, both are capable of reproducing the complete I–V characteristic curve of a specific PV module using only a few parameters that are readily available in the datasheet.  
 
