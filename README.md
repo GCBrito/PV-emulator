@@ -1,8 +1,8 @@
 
 This repository provides algorithms and resources to use an OwnTech board as a **photovoltaic (PV) emulator**.  It includes the following folders:
 
-- **Single-diode model** — the most complete version of the PV emulator.  
-- **Simplified exponential model** — a simplified version of the PV emulator.  
+- **Simplified exponential model** — a simplified version of the PV emulator.
+- **Single-diode model** — the most complete version of the PV emulator.   
 - **Experimental Data** — datasets collected from laboratory tests.  
 - **Emulators comparison** — a MATLAB algorithm to evaluate and compare the performance of the different emulators.  
 
