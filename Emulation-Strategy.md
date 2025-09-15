@@ -42,7 +42,6 @@ As presented before, the PV emulator proposed in this repository is based on **O
 
 The operation of the emulator relies on controlling the duty cycle **α**, defined as the ratio between the conduction time _t<sub>on</sub>_ of the electronic switches and the total switching period _T<sub>s</sub>_. The duty cycle is managed by a C++ algorithm pre-programmed in the **SPIN** control board, enabling the TWIST to operate as a PV emulator.
 
-
 ### Algorithm  
 
 The algorithm was developed in a **PlatformIO** environment within **Visual Studio Code** and then uploaded to the SPIN board via USB connection. It runs in loop and provides three distinct operating modes:
@@ -108,7 +107,9 @@ If the error calculated according to this equation exceeds **2%** for two consec
 
 To facilitate the understanding of the **Emulator Mode** logic, the following figure illustrates the operation of the emulator in the I–V plane:
 
+<p align="center">
 <img width="500" height="1000" alt="Emulator_Working" src="https://github.com/user-attachments/assets/a981126c-f72d-4fa1-8829-520670ffce35" />
+</p>
 
 In this image, the numbered points represent the key steps of the **Emulator Mode** operation:
 
