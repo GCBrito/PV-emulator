@@ -34,44 +34,46 @@ From mathematical theory, it is known that solving a system with five unknowns r
 The system of equations is given by:
 
 $$
-\begin{cases}
-I_{CC} = I_{PH}^{ref} - I_{S0}^{ref}\left[e^{\tfrac{q R_S I_{CC}}{A k T^{ref}}} - 1\right] - \dfrac{R_S I_{CC}}{R_P} \\[1em]
-0 = I_{PH}^{ref} - I_{S0}^{ref}\left[e^{\tfrac{q V_{CA}}{A k T^{ref}}} - 1\right] - \dfrac{V_{CA}}{R_P} \\[1em]
-I_{MP} = I_{PH}^{ref} - I_{S0}^{ref}\left[e^{\tfrac{q (R_S I_{MP}+V_{MP})}{A k T^{ref}}} - 1\right] - \dfrac{R_S I_{MP}+V_{MP}}{R_P} \\[1em]
-R_S + \dfrac{q I_{S0}^{ref} R_P (R_S - R_P)}{A k T^{ref}} e^{\tfrac{q I_{CC}}{A k T^{ref}}} = 0 \\[1em]
-I_{PH}^{ref} - \dfrac{2 V_{MP}}{R_P} - I_{S0}^{ref}\left\{\left[1+\dfrac{q (V_{MP}-R_S I_{MP})}{A k T^{ref}}\right] e^{\tfrac{q (R_S I_{MP}+V_{MP})}{A k T^{ref}}} - 1\right\} = 0
-\end{cases}
+\begin{aligned}
+I_{SC} &= I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q R_S I_{SC}}{A k T^{ref}}} - 1\big) - \frac{R_S I_{SC}}{R_P} \\
+0 &= I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q V_{OC}}{A k T^{ref}}} - 1\big) - \frac{V_{OC}}{R_P} \\
+I_{MPP} &= I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q (R_S I_{MPP}+V_{MPP})}{A k T^{ref}}} - 1\big) - \frac{R_S I_{MPP}+V_{MPP}}{R_P} \\
+R_S &+ \frac{q I_{S0}^{ref} R_P (R_S - R_P)}{A k T^{ref}}\ e^{\tfrac{q I_{SC}}{A k T^{ref}}} = 0 \\
+I_{PH}^{ref} &- \frac{2 V_{MPP}}{R_P} - I_{S0}^{ref}\Big(\big[1+\tfrac{q (V_{MPP}-R_S I_{MPP})}{A k T^{ref}}\big]\ e^{\tfrac{q (R_S I_{MPP}+V_{MPP})}{A k T^{ref}}} - 1\Big) = 0
+\end{aligned}
 $$
 
- 
-- _n<sub>s</sub>_ — number of cells in series [–]  
-- _n<sub>p</sub>_ — number of parallel strings [–]  
-- _V<sub>OC,mod</sub>_ — open-circuit voltage at the reference operating point [V]  
-- _I<sub>SC,mod</sub>_ — short-circuit current at the reference operating point [A]  
-- _V<sub>MPP,mod</sub>_ — voltage at the maximum power point at the reference operating point [V]  
-- _I<sub>MPP,mod</sub>_ — current at the maximum power point at the reference operating point [A]    
-- _R<sub>P</sub>_ — shunt (parallel) resistance [Ω]  
+In this system, the remaining parameters are:
 
+- _V<sub>OC</sub>_ — open-circuit voltage at the reference operating point [V]  
+- _I<sub>SC</sub>_ — short-circuit current at the reference operating point [A]  
+- _V<sub>MPP</sub>_ — voltage at the maximum power point at the reference operating point [V]  
+- _I<sub>MPP</sub>_ — current at the maximum power point at the reference operating point [A]
 
- To configure the emulation, the user must specify the photovoltaic (PV) module to replicate and define the desired operating point by providing the following input parameters:
+Through these equations, the I–V characteristic curve of any PV module can be determined.  
+The single-diode model differs from the [simplified exponential model](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) because it accounts for the influence of both temperature and irradiance on the PV panel. This makes it possible to emulate the module under any operating condition, whereas the simplified model only allowed simulation at STC or NOTC.
 
-- ns - number of cells in series [-]
-- np - number of parallel strings [-] 
-- VMPmod - voltage at the maximum power point [V]
-- IMPmod - current at the maximum power point [A]
-- VOCmod - open-circuit voltage [V]
-- ISCmod - short-circuit current [A]
-- Tref - reference temperature [K]
-- Sref - reference irradiance [W/m^2] 
-- muICC - temperature coefficient of the short-circuit current [A/ºC]
-- T - operating temperature [K]
-- S - operating irradiance [W/m^2]
+# _Algorithms_
+
+The algorithms in this repository enable the implementation of the single-diode model on the PV emulator.  To use this emulator, the user must specify the PV module to be replicated and define the desired operating point by providing the following input parameters, which are typically available in manufacturers’ datasheets:
+
+- **n<sub>s</sub>** — number of cells in series [–]  
+- **n<sub>p</sub>** — number of parallel strings [–]  
+- **V<sub>MPP,mod</sub>** — module voltage at the maximum power point under the reference operating condition [V]  
+- **I<sub>MPP,mod</sub>** — module current at the maximum power point under the reference operating condition [A]  
+- **V<sub>OC,mod</sub>** — module open-circuit voltage under the reference operating condition [V]  
+- **I<sub>SC,mod</sub>** — module short-circuit current under the reference operating condition [A]  
+- **T<sub>ref</sub>** — reference temperature [K]  
+- **S<sub>ref</sub>** — reference irradiance [W/m²]  
+- **μ<sub>ICC</sub>** — temperature coefficient of the short-circuit current [A/°C or A/K]  
+- **T** — operating temperature [K]  
+- **S** — operating irradiance [W/m²]  
 
 This folder contains two MATLAB scripts:
 
-- "tracer_single_diode_emulator.m": Determines the five parameters required for the single-diode model by solving a nonlinear system of equations. Additionally, it can plot both the emulated operating points as well as the PV emulator’s testing points and the load lines, and compare them to the theoretical I–V curve.
+- "tracer_single_diode_emulator.m": Determines the five parameters required for the single-diode model by solving the nonlinear system of equations. Additionally, it can plot both the emulated operating points as well as the PV emulator’s testing points and the load lines, and compare them to the theoretical I–V curve.
 - "comparison_single_diode_emulator_real_pv.m": Compares the emulated I–V curve to experimental data from a real PV module.
 
-*Usage instructions:*
+# _Usage instructions_
 
 To use the emulator, begin by running "tracer_single_diode_emulator.m" to compute the five model parameters. Once obtained, these parameters must be manually inserted into main.cpp before uploading the firmware to the SPIN board.
