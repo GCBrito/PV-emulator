@@ -74,7 +74,7 @@ To reduce oscillations caused by noise and ripple, the algorithm records the sen
 
 After two successive averaged values of the current _I<sub>s</sub>_ are obtained (i.e., after two full iterations of the previous step), the program enters a **waiting loop**. This loop continues until the relative error between the two most recent _I<sub>s</sub>_ measurements is less than **10%**. This condition ensures that steady-state operation has been reached.  
 
-Once this condition is satisfied, the most recent measured values of _V<sub>s</sub>_ and _I<sub>s</sub>_ (ideally equal to _V<sub>s0</sub>_ and _I<sub>s0</sub>_) are used to calculate the equivalent load resistance _R<sub>1</sub>_, which is unknown a priori. Graphically, this resistance corresponds to the **slope of the load** line passing through the origin of the I–V plane and the test point measured when _V<sub>s</sub> = V<sub>s0</sub>_.  
+Once this condition is satisfied, the most recent measured values of _V<sub>s</sub>_ and _I<sub>s</sub>_ (ideally equal to _V<sub>s0</sub>_ and _I<sub>s0</sub>_) are used to compute the equivalent load resistance _R<sub>1</sub>_, which is initially unknown. Graphically, this resistance corresponds to the **slope of the load line** that passes through the origin of the I–V plane and the test point measured at _V<sub>s</sub> = V<sub>s0</sub>_.
 
 The mathematical expression of this load line is:
 
