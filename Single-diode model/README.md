@@ -35,9 +35,9 @@ The system of equations is given by:
 
 $$
 \begin{aligned}
-I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q R_S I_{SC}}{A k T^{ref}}} - 1\big) - \frac{R_S I_{SC}}{R_P} &= I_{SC} \\
-I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q V_{OC}}{A k T^{ref}}} - 1\big) - \frac{V_{OC}}{R_P} &= 0\\
-I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q (R_S I_{MP}+V_{MP})}{A k T^{ref}}} - 1\big) - \frac{R_S I_{MP}+V_{MP}}{R_P} &= I_{MPP}\\
+I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q R_S I_{SC}}{A k T^{ref}}} - 1\big) - \frac{R_S I_{SC}}{R_P} = I_{SC} \\
+I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q V_{OC}}{A k T^{ref}}} - 1\big) - \frac{V_{OC}}{R_P} = 0\\
+I_{PH}^{ref} - I_{S0}^{ref}\big(e^{\tfrac{q (R_S I_{MP}+V_{MP})}{A k T^{ref}}} - 1\big) - \frac{R_S I_{MP}+V_{MP}}{R_P} = I_{MPP}\\
 R_S &+ \frac{q I_{S0}^{ref} R_P (R_S - R_P)}{A k T^{ref}}\ e^{\tfrac{q I_{SC}}{A k T^{ref}}} = 0 \\
 I_{PH}^{ref} &- \frac{2 V_{MP}}{R_P} - I_{S0}^{ref}\Big(\big[1+\tfrac{q (V_{MP}-R_S I_{PP})}{A k T^{ref}}\big]\ e^{\tfrac{q (R_S I_{MP}+V_{MP})}{A k T^{ref}}} - 1\Big) = 0
 \end{aligned}
