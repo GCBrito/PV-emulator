@@ -27,13 +27,13 @@ Once PlatformIO is installed, download the `main.cpp` and `app.ini` files from e
 Once `main.cpp` is in place, click **PlatformIO: Build** (bottom status bar) to compile the project. Ensure the build completes with **no errors**.
 
 <p align="center">
-<img width="1365" height="124" alt="VS Code (Built)" src="https://github.com/user-attachments/assets/4dad38ee-3d26-4c72-ac14-4dc03ba44d99" />
+<img width="1365" height="99" alt="VS Code (Built)" src="https://github.com/user-attachments/assets/dd96c6d4-b47d-45ed-98d5-03f01d42003a" />
 </p>
 
 Then, with the OwnTech board connected to your computer via USB, click **PlatformIO: Upload** to flash the algorithm to the **SPIN** board.
 
 <p align="center">
-<img width="1365" height="253" alt="VS Code (Upload)" src="https://github.com/user-attachments/assets/ff1d6dd6-45b5-4eef-b13d-7e9ea7292717" />
+<img width="1365" height="96" alt="VS Code (Serial Monitor)" src="https://github.com/user-attachments/assets/c19289a4-922b-4e5a-bead-54c964498b89" />
 </p>
 
 To operate the OwnTech board, open **PlatformIO: Serial Monitor**.  Press **E** to enter **Emulator Mode**.  Press **I** to stop the emulation (Idle Mode).
