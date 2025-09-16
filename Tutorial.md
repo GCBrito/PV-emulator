@@ -1,11 +1,3 @@
-# _First steps_
-
-The first step is to download and install the numerical environment required to use the OwnTech board.  To do so, follow the [**OwnTech Tutorial**](https://docs.owntech.org/latest/core/docs/environment_setup/).
-
-# Installing  
-
-Once PlatformIO is installed, download the `main.cpp` and `app.ini` files from either emulator version (the [simplified exponential model](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model/SPIN%20Firmware) or the [single-diode model](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model/SPIN%20Firmware)) and replace the original `main.cpp` and `app.ini` files in the `core/src` directory.
-
 # Test's configuration
 
 To carry out the laboratory experiments, the setup shown in the following figure was implemented:   
@@ -21,7 +13,19 @@ It consists of the following elements:
 - A variable resistive load.  
 - An ammeter to measure the output current (_I<sub>out</sub>_).  
 - A voltmeter to measure the output voltage (_V<sub>out</sub>_).
-  
+
+# _First steps_
+
+The first step is to download and install the numerical environment required to use the OwnTech board.  To do so, follow the [**OwnTech Tutorial**](https://docs.owntech.org/latest/core/docs/environment_setup/).
+
+# Installing  
+
+Once PlatformIO is installed, download the `main.cpp` and `app.ini` files from either emulator version (the [simplified exponential model](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model/SPIN%20Firmware) or the [single-diode model](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model/SPIN%20Firmware)) and replace the original `main.cpp` and `app.ini` files in the `core/src` directory.
+
+# Running the algorithms
+
+<img width="1365" height="124" alt="VS Code (Built)" src="https://github.com/user-attachments/assets/4dad38ee-3d26-4c72-ac14-4dc03ba44d99" />
+
 # Safety
 
 To avoid hazardous currents or voltages, it is important to limit the input voltage and current that the DC source can deliver. When applying these limits, the value of _V<sub>in</sub>_ must remain higher than the _V<sub>OC</sub>_ of the PV module to be emulated.
