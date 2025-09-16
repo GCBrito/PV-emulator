@@ -1,4 +1,4 @@
-# Test's configuration
+# _Test's configuration_
 
 To carry out the laboratory experiments, the setup shown in the following figure was implemented:   
 
@@ -18,11 +18,11 @@ It consists of the following elements:
 
 The first step is to download and install the numerical environment required to use the OwnTech board.  To do so, follow the [**OwnTech Tutorial**](https://docs.owntech.org/latest/core/docs/environment_setup/).
 
-# Installing  
+# _Installing_  
 
 Once PlatformIO is installed, download the `main.cpp` and `app.ini` files from either emulator version (the [simplified exponential model](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model/SPIN%20Firmware) or the [single-diode model](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model/SPIN%20Firmware)) and replace the original `main.cpp` and `app.ini` files in the `core/src` directory.
 
-# Running 
+# _Running_ 
 
 Once `main.cpp` is in place, click **PlatformIO: Build** (bottom status bar) to compile the project. Ensure the build completes with **no errors**.
 
@@ -42,7 +42,7 @@ To operate the OwnTech board, open **PlatformIO: Serial Monitor**.  Press **E** 
 <img width="1365" height="96" alt="VS Code (Serial Monitor)" src="https://github.com/user-attachments/assets/37ac49fb-9c28-4813-939c-0ef9333b5922" />
 </p>
 
-# Safety
+# _Safety_
 
 To avoid hazardous currents or voltages, it is important to limit the input voltage and current that the DC source can deliver. When applying these limits, the value of _V<sub>in</sub>_ must remain higher than the _V<sub>OC</sub>_ of the PV module to be emulated.
 
