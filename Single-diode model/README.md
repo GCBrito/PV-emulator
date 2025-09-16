@@ -2,7 +2,7 @@
 
 This repository presents a C++ algorithm that enables the OwnTech board to operate as a PV emulator capable of reproducing the behavior of any PV module under arbitrary operating points. To achieve this, the user must provide a set of reference parameters obtained from the datasheet of the targeted module. These parameters are typically specified at either **STC** (Standard Test Conditions — 1000 W/m² solar irradiance, AM1.5 spectrum, and a cell temperature of 25 °C) or **NOTC** (Normal Operating Test Conditions — 800 W/m² solar irradiance, AM1.5 spectrum, a cell temperature of 20 °C, and a wind speed of 1 m/s). Once these reference values are defined, the user only needs to specify the temperature and irradiance of the operating point to be emulated.
 
-# Simplified exponencial model
+# _Single-diode model_
 
 The previously mentioned electrical model is a widely used and well-validated approach:
 
