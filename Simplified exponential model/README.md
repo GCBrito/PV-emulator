@@ -2,7 +2,7 @@
 
 This repository presents a C++ algorithm that allows the OwnTech board to perfom as PV emulator that can reproduce the behavior of any PV module, but only at the operating points **STC** (Standard Test Conditions — 1000 W/m² solar irradiance, AM1.5 spectrum and cell temperature of 25 °C) or **NOTC** (Normal Operating Test Conditions — 800 W/m² solar irradiance, AM1.5 spectrum, cell temperature of 20 °C and wind speed of 1 m/s). This limitation arises because the emulator is based on the **simplified exponential model**, a mathematical model that reconstructs the I–V characteristic curve of a PV module using only four parameters provided in the manufacturer’s datasheet: _V<sub>OC</sub>_, _I<sub>SC</sub>_, _V<sub>MPP</sub>_, and _I<sub>MPP</sub>_. However, since datasheets typically list these values only at STC or NOTC, the emulator cannot accurately represent the electrical behavior of a PV module under different irradiance or temperature conditions.
 
-# Simplified exponencial model
+# _Simplified exponencial model_
 
 The previously mentioned mathematical model can be described by the following two equations:
 
