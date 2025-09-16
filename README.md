@@ -9,7 +9,7 @@ This repository provides algorithms and resources to use an OwnTech board as a *
 To better understand the algorithms presented in this repository, a set of text files has been organized.  
 The following reading order is recommended for readers who are not yet familiar with this work:
 
-1) [**Main README**](https://github.com/GCBrito/PV-emulator/tree/main) — introduces the concept of a PV emulator and presents the OwnTech technology.  
+1) [**Main README**](https://github.com/GCBrito/PV-emulator/blob/main/README.md) — introduces the concept of a PV emulator and presents the OwnTech technology.  
 2) [**Strategy**](https://github.com/GCBrito/PV-emulator/blob/main/Strategy.md) — describes the proposed emulation strategy.  
 3) [**Simplified exponential model README**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) — explains the simplified exponential model and how the corresponding emulator works.  
 4) [**Single-diode model README**](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model) — explains the single-diode model and how the corresponding emulator works.  
