@@ -8,9 +8,24 @@ Once PlatformIO is installed, download the `main.cpp` and `app.ini` files from e
 
 # Test's configuration
 
+To carry out the laboratory experiments, the setup shown in the following figure was implemented:   
+
 <p align="center">
 <img width="500" height="400" alt="Test's configuration" src="https://github.com/user-attachments/assets/f6368711-5379-4dcc-9017-c8cffc4b75b9" />
 </p>
 
+It consists of the following elements:
+
+- A DC power supply (_V<sub>in</sub>_).  
+- The **OwnTech** board, running the Emulator's algorithm.  
+- A variable resistive load.  
+- An ammeter to measure the output current (_I<sub>out</sub>_).  
+- A voltmeter to measure the output voltage (_V<sub>out</sub>_).
+  
 # Safety
 
+To avoid hazardous currents or voltages, it is important to limit the input voltage and current that the DC source can deliver. When applying these limits, the value of _V<sub>in</sub>_ must remain higher than the _V<sub>OC</sub>_ of the PV module to be emulated.
+
+It is also important to highlight that the **OwnTech** board has a maximum output current limitation of 16 A (considering the two parallel-connected Buck converters). This constraint must be taken into account when selecting the PV module to be emulated: in particular, the short-circuit current (_I<sub>SC</sub>_)must remain below this value.  
+
+Furthermore, the limits of the external sensors (ammeter and voltmeter), as well as those of the connected load, must also be considered to ensure that the peripheral equipment is not subjected to potentially hazardous operating conditions.  
