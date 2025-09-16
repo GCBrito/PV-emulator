@@ -6,7 +6,7 @@ The physical configuration of the PV emulator described here is illustrated in t
 
 The PV emulator proposed in this repository relies heavily on the understanding of the **current–voltage (I–V) characteristic curve** of photovoltaic (PV) modules. For this reason, it is important to examine this curve in more detail.
 
-## _I–V Characteristic Curve_  
+# _I–V Characteristic Curve_  
 
 As previously explained, the electrical behavior of a photovoltaic (PV) panel is generally represented by its I-V curve, which can be illustrated in the next figure:
 
@@ -32,7 +32,7 @@ Regardless of which of these two models is considered, both are capable of repro
 
 In this context, and with the goal of using the I–V curve in a numerical environment (for the emulation process), an algorithm was developed to reproduce the complete I–V characteristic curve by combining one of the previously mentioned mathematical models with linear interpolation.
 
-## _Emulation Strategy_  
+# _Emulation Strategy_  
 
 As presented before, the PV emulator proposed in this repository is based on **OwnTech technology** and is specifically configured to operate as two parallel-connected synchronous Buck converters (more information about this configuration can be found in [OwnTech's GitHub](https://github.com/owntech-foundation/examples/blob/main/TWIST/DC_DC/buck_voltage_mode/README.md)):
 
@@ -42,7 +42,7 @@ As presented before, the PV emulator proposed in this repository is based on **O
 
 The operation of the emulator relies on controlling the duty cycle **α**, defined as the ratio between the conduction time _t<sub>on</sub>_ of the electronic switches and the total switching period _T<sub>s</sub>_. The duty cycle is managed by a C++ algorithm pre-programmed in the **SPIN** control board, enabling the TWIST to operate as a PV emulator.
 
-### Algorithm  
+## Algorithm  
 
 The algorithm was developed in a **PlatformIO** environment within **Visual Studio Code** and then uploaded to the SPIN board via USB connection. It runs in loop and provides three distinct operating modes:
 
