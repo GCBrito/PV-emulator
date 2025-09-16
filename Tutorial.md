@@ -22,9 +22,25 @@ The first step is to download and install the numerical environment required to 
 
 Once PlatformIO is installed, download the `main.cpp` and `app.ini` files from either emulator version (the [simplified exponential model](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model/SPIN%20Firmware) or the [single-diode model](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model/SPIN%20Firmware)) and replace the original `main.cpp` and `app.ini` files in the `core/src` directory.
 
-# Running the algorithms
+# Running 
 
+Once `main.cpp` is in place, click **PlatformIO: Build** (bottom status bar) to compile the project. Ensure the build completes with **no errors**.
+
+<p align="center">
 <img width="1365" height="124" alt="VS Code (Built)" src="https://github.com/user-attachments/assets/4dad38ee-3d26-4c72-ac14-4dc03ba44d99" />
+</p>
+
+Then, with the OwnTech board connected to your computer via USB, click **PlatformIO: Upload** to flash the algorithm to the **SPIN** board.
+
+<p align="center">
+<img width="1365" height="253" alt="VS Code (Upload)" src="https://github.com/user-attachments/assets/ff1d6dd6-45b5-4eef-b13d-7e9ea7292717" />
+</p>
+
+To operate the OwnTech board, open **PlatformIO: Serial Monitor**.  Press **E** to enter **Emulator Mode**.  Press **I** to stop the emulation (Idle Mode).
+
+<p align="center">
+<img width="1365" height="96" alt="VS Code (Serial Monitor)" src="https://github.com/user-attachments/assets/37ac49fb-9c28-4813-939c-0ef9333b5922" />
+</p>
 
 # Safety
 
