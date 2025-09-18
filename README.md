@@ -11,10 +11,11 @@ The following reading order is recommended for readers who are not yet familiar 
 
 1) [**Main README**](https://github.com/GCBrito/PV-emulator/blob/main/README.md) — introduces the concept of a PV emulator and presents the OwnTech technology.  
 2) [**Strategy**](https://github.com/GCBrito/PV-emulator/blob/main/Strategy.md) — describes the proposed emulation strategy.  
-3) [**Simplified exponential model README**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) — explains the simplified exponential model and how the corresponding emulator works.  
+3) [**Simplified exponential model README (optional)**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) — explains the simplified exponential model and how the corresponding emulator works.  
 4) [**Single-diode model README**](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model) — explains the single-diode model and how the corresponding emulator works.  
 5) [**Tutorial**](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md) — provides instructions on how to use the emulator in a laboratory environment.
- 
+6) [**Basics of Power Electronics (optional)**](https://github.com/GCBrito/PV-emulator/blob/main/Basics%20of%20Power%20Electronics%20(optional).md) — Presents a classical Buck converter analysis aimed at readers who are not yet familiar with power electronics.
+
 # _PV Emulator_
 
 A Photovoltaic (PV) module is a system composed of semiconductor materials capable of converting solar energy into electricity. From an electrical perspective, when environmental conditions are sufficient, connecting a load to a PV panel automatically subjects it to a DC (Direct Current) voltage and current. This principle is best illustrated by examining the current–voltage (I–V) plane, as shown in the figure below:
