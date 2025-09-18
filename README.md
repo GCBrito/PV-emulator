@@ -14,7 +14,7 @@ The following reading order is recommended for readers who are not yet familiar 
 4) [**Single-diode model README**](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model) — explains the single-diode model and how the corresponding emulator works.  
 5) [**Tutorial**](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md) — provides instructions on how to use the emulator in a laboratory environment.
 6) [**Simplified exponential model README (optional)**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) — explains the simplified exponential model and how the corresponding emulator works. 
-7) [**Basics of Power Electronics (optional)**](https://github.com/GCBrito/PV-emulator/blob/main/Basics%20of%20Power%20Electronics%20(optional).md) — Presents a classical Buck converter analysis aimed at readers who are not yet familiar with power electronics.
+7) [**Basics of Power Electronics (optional)**](https://github.com/GCBrito/PV-emulator/blob/main/Basics%20of%20Power%20Electronics%20(optional).md) — presents a classical Buck converter analysis aimed at readers who are not yet familiar with power electronics.
 
 # _PV Emulator_
 
