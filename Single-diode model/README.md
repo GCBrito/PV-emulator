@@ -79,4 +79,4 @@ This folder contains two **MATLAB** scripts:
 
 # _Usage instructions_
 
-**To use the emulator**, begin by running "tracer_single_diode_emulator.m" to compute the five model parameters. Once obtained, these parameters must be manually inserted into main.cpp before uploading the firmware to the SPIN board.
+**To use the emulator**, begin by running "tracer_single_diode_emulator.m" to compute the five model parameters. Once obtained, these parameters must be manually inserted into `main.cpp` before uploading the firmware to the SPIN board. For step-by-step guidance, see the [Tutorial](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md).
