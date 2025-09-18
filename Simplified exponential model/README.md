@@ -38,4 +38,6 @@ This folder contains one **MATLAB** script:
 
 # _Usage instructions_
 
-**To use the emulator**, the user must manually insert the parameters listed above into main.cpp before uploading the firmware to the SPIN board. 
+**To use the emulator**, edit `main.cpp` and set the parameters listed above **before** uploading the firmware to the SPIN board.  
+For step-by-step guidance, see the [Tutorial](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md).
+
