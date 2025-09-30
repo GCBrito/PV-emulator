@@ -487,9 +487,9 @@ void loop_application_task() {
                     loadChangeCounter++; // Increment load change counter
                     if (loadChangeCounter >= REQUIRED_PERSISTENCE_COUNT) {
                         loadChangeCounter = 0;
-                        dutyCycle = voltageReferenceE_test_point; // Reset duty cycle to test point
-                        emulatorSteadyState = false; // Exit steady state
+                        dutyCycle = pid.calculateWithReturn(voltageReferenceE_test_point, lowVoltage1);
                         shield.power.setDutyCycle(ALL, dutyCycle);
+                        emulatorSteadyState = false; // Exit steady state
                         printk("Recalibration\n");
                     }
                 } else {
