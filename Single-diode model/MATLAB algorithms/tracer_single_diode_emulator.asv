@@ -5,10 +5,10 @@ clc; clear; close all; format long
 ns = 72; % Number of series cells
 np = 1; % Number of parallel branches
 
-VMPmod = 17.4; % Voltage at maximum power point of the module (V)
-IMPmod = 5.02; % Current at maximum power point of the module (A)
-VOCmod = 21.7; % Open-circuit voltage of the module (V)
-ISCmod = 5.34; % Short-circuit current of the module (A)
+VMPmod = 17.1; % Voltage at maximum power point of the module (V)
+IMPmod = 8.30; % Current at maximum power point of the module (A)
+VOCmod = 37.2; % Open-circuit voltage of the module (V)
+ISCmod = 8.87; % Short-circuit current of the module (A)
 
 Vmp_cell = VMPmod / ns;
 Imp_cell = IMPmod / np;
@@ -18,11 +18,11 @@ Isc_cell = ISCmod / np;
 Tref = 25 + 273.15; % Reference temperature (K)
 Sref = 1000; % Reference irradiance (W/m²)
 
-muICC = 2.12e-3; % Temperature coefficient
+muICC = 0.0058; % Temperature coefficient
 %% 2) Operating Conditions
 
-T = 25 + 273.15; % Current temperature (K)
-S = 1000; % Current irradiance (W/m²)
+T = 44.5 + 273.15; % Current temperature (K)
+S = 765; % Current irradiance (W/m²)
 
 %% 3) Physical Constants
 
@@ -197,16 +197,16 @@ mesures = [
     % 406.4705882,37.029892,0.242107,34.741459,0.227145;
 
     % --- Sref = 1000, Tref = 25, S = 765, T = 44.5 ---
-    % 3.276853253,36.058861,11.093060,22.148668,6.813763;
-    % 3.473604827,35.893806,10.355574,23.533447,6.789537;
-    % 3.797527048,35.901566,9.535309,25.083090,6.661966;
-    % 4.232854864,36.052902,8.577839,27.035177,6.432309;
-    % 4.633445946,35.951599, 7.810769,27.919050,6.065634;
-    % 5.251838235,35.942787,6.917910,29.022854,5.586030;
-    % 6.098138748,36.042290,5.907085,30.229673,4.954437;
-    % 13.33891213,35.980782, 2.834330,32.149712,2.532543;
-    % 61.90740741,35.987362,0.760594,33.594578,0.710022;
-    % 421.125,35.992996,0.285993,33.809090,0.268640;
+    3.276853253,36.058861,11.093060,22.148668,6.813763;
+    3.473604827,35.893806,10.355574,23.533447,6.789537;
+    3.797527048,35.901566,9.535309,25.083090,6.661966;
+    4.232854864,36.052902,8.577839,27.035177,6.432309;
+    4.633445946,35.951599, 7.810769,27.919050,6.065634;
+    5.251838235,35.942787,6.917910,29.022854,5.586030;
+    6.098138748,36.042290,5.907085,30.229673,4.954437;
+    13.33891213,35.980782, 2.834330,32.149712,2.532543;
+    61.90740741,35.987362,0.760594,33.594578,0.710022;
+    421.125,35.992996,0.285993,33.809090,0.268640;
 
     % ---------------Uni-Solar ES-62T-----------------
     
