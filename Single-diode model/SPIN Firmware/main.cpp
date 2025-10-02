@@ -16,21 +16,21 @@ void loop_critical_task(); // Sensor reading and PWM control task
 
 // Parameters for I-V interpolation
 #define HISTORY_SIZE 2 // History size to ensure steady-state current
-#define N_POINTS 11 // Number of points for I-V curve approximation
+#define N_POINTS 11 // Number of points for I-V curvtte approximation
 
 // PV module parameters (datasheet)
-const float32_t ns = 10;     // Number of series cells
+const float32_t ns = 36;     // Number of series cells
 const float32_t np = 1;      // Number of parallel cells
 
-const float32_t VMPmod = 15.0f; // Module voltage at maximum power point [V]
-const float32_t IMPmod =  4.1f; // Module current at maximum power point [A]
-const float32_t VOCmod = 21.0f; // Module open-circuit voltage [V]
-const float32_t ISCmod =  5.1f; // Module short-circuit current [A]
+const float32_t VMPmod = 35.0f; // Module voltage at maximum power point [V]
+const float32_t IMPmod =  2.59f; // Module current at maximum power point [A]
+const float32_t VOCmod = 42.6f; // Module open-circuit voltage [V]
+const float32_t ISCmod =  2.72f; // Module short-circuit current [A]
 
 const float32_t Tref = 25.0f + 273.15f; // Reference temperature [K]
 const float32_t Sref = 1000.0f; // Reference irradiance [W/m²]
 
-const float32_t muICC = 5.1e-3f; // Temperature coefficient [-]
+const float32_t muICC = 0.00136f; // Temperature coefficient [-]
 
 // Operating conditions
 static float32_t T = 25.0f + 273.15f; // Current temperature [K]
@@ -43,11 +43,11 @@ double VOC_cell = VOCmod / ns; // Cell open-circuit voltage [V]
 double ISC_cell = ISCmod / np; // Cell short-circuit current [A]
 
 // Complete model parameters (determined by the MATLAB code)
-static float32_t Iph_ref = 5.156620f; // Reference photogenerated current [A]
-static float32_t Is0_ref = 2.53e-04f;  // Reference saturation current [A]
-static float32_t A = 8.338292f;      // Ideality factor [-]
-static float32_t Rs = 0.040050f;     // Series resistance [Ohms]
-static float32_t Rp = 3.633378f;     // Parallel resistance [Ohms]
+static float32_t Iph_ref = 2.719992f; // Reference photogenerated current [A]
+static float32_t Is0_ref = 1.30e-11f;  // Reference saturation current [A]
+static float32_t A = 1.766914f;      // Ideality factor [-]
+static float32_t Rs = 0.028320f;     // Series resistance [Ohms]
+static float32_t Rp = 4249.442256f;     // Parallel resistance [Ohms]
 
 // Physical constants
 const float32_t q = 1.60217662e-19f; // Elementary charge [C]
@@ -62,7 +62,7 @@ uint8_t mode = MODE_IDLE;
 float32_t dutyCycle = 0.0; // Control variable
 static float32_t dutyCycleP = 0.8f; // Duty cycle in POWER mode
 static float32_t voltageReferenceP = 0.8f*50; // Voltage reference in POWER mode [V]
-static float32_t voltageReferenceE_test_point = 1.1f*VOCmod; // Test point voltage reference in EMULATOR mode [V]
+static float32_t voltageReferenceE_test_point = 0.5f*VOCmod; // Test point voltage reference in EMULATOR mode [V]
 static float32_t voltageReferenceE = 0.0; // Voltage reference in EMULATOR mode [V]
 
 // Thresholds and persistence
