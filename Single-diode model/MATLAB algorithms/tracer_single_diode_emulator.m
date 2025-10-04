@@ -2,13 +2,13 @@ clc; clear; close all; format long
 
 %% 1) Module Parameters
 
-ns = 72; % Number of series cells
+ns = 36; % Number of series cells
 np = 1; % Number of parallel branches
 
-VMPmod = 17.4; % Voltage at maximum power point of the module (V)
-IMPmod = 5.02; % Current at maximum power point of the module (A)
-VOCmod = 21.7; % Open-circuit voltage of the module (V)
-ISCmod = 5.34; % Short-circuit current of the module (A)
+VMPmod = 35.0; % Voltage at maximum power point of the module (V)
+IMPmod = 2.59; % Current at maximum power point of the module (A)
+VOCmod = 42.6; % Open-circuit voltage of the module (V)
+ISCmod = 2.72; % Short-circuit current of the module (A)
 
 Vmp_cell = VMPmod / ns;
 Imp_cell = IMPmod / np;
@@ -18,7 +18,7 @@ Isc_cell = ISCmod / np;
 Tref = 25 + 273.15; % Reference temperature (K)
 Sref = 1000; % Reference irradiance (W/m²)
 
-muICC = 2.12e-3; % Temperature coefficient
+muICC = 0.00136; % Temperature coefficient
 %% 2) Operating Conditions
 
 T = 25 + 273.15; % Current temperature (K)
@@ -156,15 +156,15 @@ mesures = [
     % 31.58208955,23.911114,0.999190,21.232008,0.887237;
     % 405.8490566,23.910839,0.326262,21.545561,0.293988;
 
-    2.252895753,23.937536,10.608313,12.032783,5.332525;
-    2.688362919,23.787804,9.02202,14.035207,5.323145;
-    2.854330709,23.817375,8.457655,14.91899,5.297799;
-    3.147773279,23.797363,7.802836,15.958516,5.232584;
-    3.579281184,23.820534,6.915626,17.328434,5.030826;
-    4.507462687,23.915047,5.544626,18.489063,4.28663;
-    5.81570997,23.86104,4.327792,19.562981,3.548232;
-    7.995983936,23.897846,3.208596,20.156059,2.706212;
-    22.87431694,23.8971677,1.333663,21.079178,1.176395;
+    % 2.252895753,23.937536,10.608313,12.032783,5.332525;
+    % 2.688362919,23.787804,9.02202,14.035207,5.323145;
+    % 2.854330709,23.817375,8.457655,14.91899,5.297799;
+    % 3.147773279,23.797363,7.802836,15.958516,5.232584;
+    % 3.579281184,23.820534,6.915626,17.328434,5.030826;
+    % 4.507462687,23.915047,5.544626,18.489063,4.28663;
+    % 5.81570997,23.86104,4.327792,19.562981,3.548232;
+    % 7.995983936,23.897846,3.208596,20.156059,2.706212;
+    % 22.87431694,23.8971677,1.333663,21.079178,1.176395;
 
     % -------------- KC85TS - charge R+L -------------- 
     
@@ -221,6 +221,9 @@ mesures = [
     % 9.658031088,23.066004,2.557652,18.883083,2.093833;
     % 20.5625,23.081512,1.335646,19.927521,1.153136;
     % 92.95454545,23.119362,0.512176,20.578976,0.455897;
+
+    92.95454545,23.119362,0.512176,20.578976,0.455897;
+    
     ];
 
 if ~isempty(mesures)
