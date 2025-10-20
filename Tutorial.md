@@ -1,4 +1,4 @@
-<img width="1365" height="629" alt="image" src="https://github.com/user-attachments/assets/6bcd7cc4-54b7-435f-9ba6-5dec2697cbe6" /># _Test's configuration_
+_Test's configuration_
 
 To carry out the laboratory experiments, the setup shown in the following figure was implemented:   
 
