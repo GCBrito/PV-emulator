@@ -1,4 +1,4 @@
-_Test's configuration_
+# _Test's configuration_
 
 To carry out the laboratory experiments, the setup shown in the following figure was implemented:   
 
