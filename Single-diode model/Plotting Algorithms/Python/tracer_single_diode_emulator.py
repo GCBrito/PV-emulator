@@ -80,26 +80,30 @@ def piecewise_pv_model(V_in, points_V, points_I):
 
 # --- Main Script ---
 
-## 1) Module Parameters
+## Module Parameters
 ns = 60       # Number of series cells
-n_p = 1       # Number of parallel branches (Variable changed from np to n_p)
-VMPmod = 30.1 # Voltage at maximum power point of the module (V)
-IMPmod = 8.30 # Current at maximum power point of the module (A)
-VOCmod = 37.2 # Open-circuit voltage of the module (V)
-ISCmod = 8.87 # Short-circuit current of the module (A)
-Vmp_cell = VMPmod / ns
-Imp_cell = IMPmod / n_p # Using the corrected variable n_p
-Voc_cell = VOCmod / ns
-Isc_cell = ISCmod / n_p # Using the corrected variable n_p
+n_p = 1       # Number of parallel branches 
+
+Vmp_mod_ref = 30.1 # Voltage at maximum power point of the module (V)
+Imp_mod_ref = 8.30 # Current at maximum power point of the module (A)
+Voc_mod_ref = 37.2 # Open-circuit voltage of the module (V)
+Isc_mod_ref = 8.87 # Short-circuit current of the module (A)
+
 Tref = 25 + 273.15  # Reference temperature (K)
 Sref = 1000         # Reference irradiance (W/m²)
 alpha = 0.00065     # temperature coefficient of Isc (%/K)
 
-## 2) Operating Conditions
+## Operating Conditions
 T = 44.5 + 273.15   # Current temperature (K)
 S = 765           # Current irradiance (W/m²)
 
-## 3) Physical Constants
+## PV cell parameters 
+Vmp_cell_ref = Vmp_mod_ref / ns
+Imp_cell_ref = Imp_mod_ref / n_p 
+Voc_cell_ref = Voc_mod_ref / ns
+Isc_cell_ref = Isc_mod_ref / n_p 
+
+## Physical Constants
 q = 1.60217662e-19  # Elementary charge (C)
 k = 1.38064852e-23  # Boltzmann constant (J/K)
 E_G0 = 1.166          # Band gap energy at 0K (eV)
@@ -108,16 +112,16 @@ k2 = 636              # Coefficient k2 (K)
 
 ## 4) Parameter Estimation via least_squares (more robust than fsolve)
 # Initial guess based on MATLAB's x0 for better convergence
-x0 = np.array([Isc_cell, 1e-9, 3.0, 0.01, 2.0])
+x0 = np.array([Isc_cell_ref, 1e-9, 3.0, 0.01, 2.0])
 
 # Define physical bounds for the parameters ([Iph, Is0, A, Rs, Rp])
 lb = [0, 0, 0.5, 0, 1e-3]  # Lower bounds
-ub = [Isc_cell * 1.2, 1e-6, 5.0, 1.0, 10000] # Upper bounds
+ub = [Isc_cell_ref * 1.2, 1e-6, 5.0, 1.0, 10000] # Upper bounds
 
 result = least_squares(
     residuals_2_20, 
     x0, 
-    args=(Voc_cell, Isc_cell, Vmp_cell, Imp_cell, q, k, Tref), 
+    args=(Voc_cell_ref, Isc_cell_ref, Vmp_cell_ref, Imp_cell_ref, q, k, Tref), 
     bounds=(lb, ub),
     method='trf', # Trust Region Reflective algorithm, good for bounds
     ftol=1e-10,
@@ -138,16 +142,16 @@ print(f'Rp      = {Rp:.6f} Ohms')
 ## 5) Characteristic Points (used to build the I-V model)
 V_cell = np.array([
     0.0,
-    0.2 * VMPmod / ns,
-    0.4 * VMPmod / ns,
-    0.6 * VMPmod / ns,
-    0.8 * VMPmod / ns,
-    0.9 * VMPmod / ns,
-    VMPmod / ns,
-    (VMPmod / ns + VOCmod / ns) / 2.0,
-    0.9 * VOCmod / ns,
-    0.95 * VOCmod / ns,
-    VOCmod / ns
+    0.2 * Vmp_mod_ref / ns,
+    0.4 * Vmp_mod_ref / ns,
+    0.6 * Vmp_mod_ref / ns,
+    0.8 * Vmp_mod_ref / ns,
+    0.9 * Vmp_mod_ref / ns,
+    Vmp_mod_ref / ns,
+    (Vmp_mod_ref / ns + Voc_mod_ref / ns) / 2.0,
+    0.9 * Voc_mod_ref / ns,
+    0.95 * Voc_mod_ref / ns,
+    Voc_mod_ref / ns
 ])
 
 # Use a list comprehension, which is a Pythonic way to apply a function to each element
@@ -203,7 +207,7 @@ fig, ax = plt.subplots(figsize=(12, 8))
 
 # 1. Plot "Load Lines"
 Rs_to_plot = np.sort(np.unique(R_data))
-V_line_max = np.max(V_violet) * 1.25 if len(V_violet) > 0 else VOCmod * 1.1
+V_line_max = np.max(V_violet) * 1.25 if len(V_violet) > 0 else Voc_mod_ref * 1.1
 V_line = np.linspace(0, V_line_max, 100)
 
 for r_val in Rs_to_plot:
@@ -213,7 +217,7 @@ for r_val in Rs_to_plot:
         ax.plot(V_line, I_line, linestyle='--', linewidth=0.8, color='0.5')
 
 # 2. Plot the I-V Model
-V_plot = np.linspace(0, VOCmod, 500)
+V_plot = np.linspace(0, Voc_mod_ref, 500)
 I_plot = modele_pv(V_plot)
 h_model, = ax.plot(V_plot, I_plot, 'r-', linewidth=2, label='I-V Curve - Single diode model')
 
@@ -234,9 +238,9 @@ plt.rcParams['axes.labelweight'] = 'normal'
 
 ax.set_xlabel('Voltage (V)', fontsize=22)
 ax.set_ylabel('Current (A)', fontsize=22)
-ax.set_xlim(0, 1.01 * VOCmod)
+ax.set_xlim(0, 1.01 * Voc_mod_ref)
 # Use max of measured current or calculated short-circuit current for robust y-limit
-ylim_max = max(np.max(I_violet) if I_violet.size > 0 else 0, ISCmod)
+ylim_max = max(np.max(I_violet) if I_violet.size > 0 else 0, Isc_mod_ref)
 ax.set_ylim(0, 1.1 * ylim_max)
 ax.tick_params(axis='both', which='major', labelsize=20)
 ax.grid(False)
