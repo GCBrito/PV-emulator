@@ -4,7 +4,7 @@ This repository provides algorithms and resources to use an OwnTech board as a *
 - **Single-diode model** — the most complete version of the PV emulator.   
 - **Simplified exponential model** — a simplified version of the PV emulator.
 - **Experimental Data** — datasets collected from laboratory tests.  
-- **Emulators comparison** — a MATLAB algorithm to evaluate and compare the performance of the different emulators.  
+- **Emulators comparison** — an algorithm to evaluate and compare the performance of the different emulators.  
 
 To better understand the algorithms presented in this repository, a set of text files has been organized.  
 The following reading order is recommended for readers who are not yet familiar with this work:
