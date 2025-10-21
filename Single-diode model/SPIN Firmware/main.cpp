@@ -16,43 +16,47 @@ void loop_critical_task(); // Sensor reading and PWM control task
 
 // Parameters for I-V interpolation
 #define HISTORY_SIZE 2 // History size to ensure steady-state current
-#define N_POINTS 11 // Number of points for I-V curvtte approximation
+#define N_POINTS 11 // Number of points for I-V curve approximation
 
 // PV module parameters (datasheet)
 const float32_t ns = 36;     // Number of series cells
 const float32_t np = 1;      // Number of parallel cells
 
-const float32_t VMPmod = 35.0f; // Module voltage at maximum power point [V]
-const float32_t IMPmod =  2.59f; // Module current at maximum power point [A]
-const float32_t VOCmod = 42.6f; // Module open-circuit voltage [V]
-const float32_t ISCmod =  2.72f; // Module short-circuit current [A]
+const float32_t Vmp_mod_ref = 18.2f; // Module voltage at maximum power point [V]
+const float32_t Imp_mod_ref =  2.2f; // Module current at maximum power point [A]
+const float32_t Voc_mod_ref = 22.0f; // Module open-circuit voltage [V]
+const float32_t Isc_mod_ref =  2.37f; // Module short-circuit current [A]
 
 const float32_t Tref = 25.0f + 273.15f; // Reference temperature [K]
 const float32_t Sref = 1000.0f; // Reference irradiance [W/m²]
 
-const float32_t muICC = 0.00136f; // Temperature coefficient [-]
+const float32_t alpha = 0.0024885f; // Temperature coefficient of Isc (%/K)
 
 // Operating conditions
 static float32_t T = 25.0f + 273.15f; // Current temperature [K]
 static float32_t S = 1000.0f;       // Current irradiance [W/m²]
 
 // PV cell parameters 
-double VMP_cell = VMPmod / ns; // Cell voltage at maximum power point [V]
-double IMP_cell = IMPmod / np; // Cell currrent at maximum power point [A]
-double VOC_cell = VOCmod / ns; // Cell open-circuit voltage [V]
-double ISC_cell = ISCmod / np; // Cell short-circuit current [A]
+double Vmp_cell_ref = Vmp_mod_ref / ns; // Cell voltage at maximum power point [V]
+double Imp_cell_ref = Imp_mod_ref / np; // Cell currrent at maximum power point [A]
+double Voc_cell_ref = Voc_mod_ref / ns; // Cell open-circuit voltage [V]
+double Isc_cell_ref = Isc_mod_ref / np; // Cell short-circuit current [A]
 
 // Complete model parameters (determined by the MATLAB code)
-static float32_t Iph_ref = 2.719992f; // Reference photogenerated current [A]
-static float32_t Is0_ref = 1.30e-11f;  // Reference saturation current [A]
-static float32_t A = 1.766914f;      // Ideality factor [-]
-static float32_t Rs = 0.028320f;     // Series resistance [Ohms]
-static float32_t Rp = 4249.442256f;     // Parallel resistance [Ohms]
+static float32_t Iph_ref = 2.370265f; // Reference photogenerated current [A]
+static float32_t Is0_ref = 7.99e-08f;  // Reference saturation current [A]
+static float32_t A = 1.383022f;      // Ideality factor [-]
+static float32_t Rs = 0.004203f;     // Series resistance [Ohms]
+static float32_t Rp = 37.572742f;     // Parallel resistance [Ohms]
 
 // Physical constants
 const float32_t q = 1.60217662e-19f; // Elementary charge [C]
 const float32_t k = 1.38064852e-23f; // Boltzmann constant [J/K]
-const float32_t Eg = 1.21f * q;      // Silicon bandgap energy [J]
+
+// --- MATERIAL CONSTANTS ---
+const float32_t E_G0 = 1.166f; // Band gap energy at 0K (eV)
+const float32_t k1 = 4.73e-4f; // Coefficient k1 (eV/K)
+const float32_t k2 = 636.0f;   // Coefficient k2 (K)
 
 // Operating modes
 enum modeMenu { MODE_IDLE = 0, MODE_POWER, MODE_EMULATOR };
@@ -62,7 +66,7 @@ uint8_t mode = MODE_IDLE;
 float32_t dutyCycle = 0.0; // Control variable
 static float32_t dutyCycleP = 0.8f; // Duty cycle in POWER mode
 static float32_t voltageReferenceP = 0.8f*50; // Voltage reference in POWER mode [V]
-static float32_t voltageReferenceE_test_point = 0.5f*VOCmod; // Test point voltage reference in EMULATOR mode [V]
+static float32_t voltageReferenceE_test_point = 1.1f*Voc_mod_ref; // Test point voltage reference in EMULATOR mode [V]
 static float32_t voltageReferenceE = 0.0; // Voltage reference in EMULATOR mode [V]
 
 // Thresholds and persistence
@@ -138,7 +142,7 @@ void updateHistory(float32_t *hist, float32_t val) {
 }
 
 // Generates an array of voltage points for I-V curve interpolation.
-// The points are distributed from 0 to VOCmod based on fractions of VMPmod.
+// The points are distributed from 0 to Voc_mod_ref based on fractions of Vmp_mod_ref.
 //
 // Inputs:
 // - V: Array to store the calculated voltage points [V].
@@ -147,50 +151,56 @@ void updateHistory(float32_t *hist, float32_t val) {
 // - void
 void computeVoltagePoints(float32_t V[N_POINTS]) {
     V[0] = 0.0f;
-    V[1] = 0.2f * VMP_cell * ns;
-    V[2] = 0.4f * VMP_cell * ns;
-    V[3] = 0.6f * VMP_cell * ns;
-    V[4] = 0.8f * VMP_cell * ns;
-    V[5] = 0.9f * VMP_cell * ns;
-    V[6] = VMP_cell * ns;
-    V[7] = (VMP_cell * ns + VOC_cell*ns) / 2.0f;
-    V[8] = 0.9f * VOC_cell*ns;
-    V[9] = 0.95f * VOC_cell*ns;
-    V[10] = VOC_cell*ns;
+    V[1] = 0.2f * Vmp_cell_ref * ns;
+    V[2] = 0.4f * Vmp_cell_ref * ns;
+    V[3] = 0.6f * Vmp_cell_ref * ns;
+    V[4] = 0.8f * Vmp_cell_ref * ns;
+    V[5] = 0.9f * Vmp_cell_ref * ns;
+    V[6] = Vmp_cell_ref * ns;
+    V[7] = (Vmp_cell_ref * ns + Voc_cell_ref*ns) / 2.0f;
+    V[8] = 0.9f * Voc_cell_ref*ns;
+    V[9] = 0.95f * Voc_cell_ref*ns;
+    V[10] = Voc_cell_ref*ns;
 }
 
-// Solves the complete 5-parameter I-V equation using Newton-Raphson.
-// The equation solved is: $I = Iph - Is0*gamma*(exp(q*(Rs*I + V)/(A*k*T)) - 1) - (Rs*I + V)/Rp$
+// Solves the I-V equation using the final model with temperature-dependent Eg and alpha.
 //
 // Inputs:
 // - V: The voltage for which to solve the current [V].
 //
 // Returns:
 // - The calculated current [A].
-float32_t solve_I_V_complete(float32_t V) {
-    // Calculate temperature and irradiance-dependent parameters
-    float32_t Iph = Iph_ref * (S / Sref) + muICC * (T - Tref); // Photogenerated current [A]
-    float32_t gamma = powf(T / Tref, 3.0f) * expf((Eg / (A * k)) * (1.0f / Tref - 1.0f / T)); // Diode saturation current factor
+float32_t solve_I_V_final_model(float32_t V) {
+    // 1. Photocurrent with T and S dependency, using alpha
+    float32_t Iph = (S / Sref) * (Iph_ref + alpha * (T - Tref));
 
-    // Initial estimation
-    float32_t I = Is0_ref * gamma; // Initial current guess [A]
+    // 2. Temperature-dependent Band Gap Energy (Eg) (Varshni's equation)
+    // Eg is calculated in eV and then converted to Joules
+    float32_t Eg_ref_J = (E_G0 - (k1 * Tref * Tref) / (Tref + k2)) * q;
+    float32_t Eg_J = (E_G0 - (k1 * T * T) / (T + k2)) * q;
 
-    // Constant to prevent overflow
+    // 3. Saturation Current (Is) with T and Eg(T) dependency
+    // Using a robust form of the equation
+    float32_t exponent_term = (Eg_ref_J / (A * k * Tref)) - (Eg_J / (A * k * T));
+    float32_t Is = Is0_ref * powf(T / Tref, 3.0f) * expf(exponent_term);
+
+    // 4. Iterative solver (Newton-Raphson) for the diode equation
+    float32_t I = Iph; // Initial guess
+
     const float32_t cap = 700.0f;
 
-    // Newton-Raphson method
     for (int it = 0; it < 30; it++) {
-        float32_t C = q / (A * k * T);
-        float32_t a = fminf(C * (Rs * I + V), cap);
-        float32_t expo = expf(a);
+        float32_t V_diode = V + I * Rs;
+        float32_t arg_exp = fminf(q * V_diode / (A * k * T), cap);
+        float32_t expo = expf(arg_exp);
 
-        // Function f(I) = Iph - Is0*gamma*(exp(a) - 1) - (Rs*I + V)/Rp - I
-        float32_t f = Iph - Is0_ref * gamma * (expo - 1.0f) - (Rs * I + V) / Rp - I;
+        // Diode equation function f(I) = 0
+        float32_t f = Iph - Is * (expo - 1.0f) - V_diode / Rp - I;
 
         // Derivative df/dI
-        float32_t df = -Rs / Rp - Is0_ref * gamma * expo * (q * Rs / (A * k * T)) - 1.0f;
+        float32_t df = -Is * expo * (q * Rs / (A * k * T)) - Rs / Rp - 1.0f;
 
-        // Newton's correction
+        // Newton-Raphson step
         float32_t dI = -f / df;
         I = I + dI;
 
@@ -199,12 +209,11 @@ float32_t solve_I_V_complete(float32_t V) {
             break;
         }
     }
-
     return I;
 }
 
 // Calculates the currents corresponding to the voltage points for the I-V curve
-// using the complete 5-parameter model.
+// using the final 5-parameter model.
 //
 // Inputs:
 // - I: Array to store the calculated current points [A].
@@ -215,7 +224,7 @@ float32_t solve_I_V_complete(float32_t V) {
 void computeCurrentPoints(float32_t I[N_POINTS], float32_t V[N_POINTS]) {
     for (int i = 0; i < N_POINTS; i++) {
         float32_t V_cell = V[i] / ns; // Voltage per cell [V]
-        float32_t I_cell = solve_I_V_complete(V_cell); // Current per cell [A]
+        float32_t I_cell = solve_I_V_final_model(V_cell); // Current per cell [A]
         I[i] = I_cell * np; // Total module current [A]
     }
 }
@@ -297,18 +306,18 @@ void setup_routine() {
     // Calculate I-V segments using the complete model
     float32_t Vp[N_POINTS], Ip[N_POINTS];
     computeVoltagePoints(Vp);
-    computeCurrentPoints(Ip, Vp); // Uses the complete model
+    computeCurrentPoints(Ip, Vp); // Uses the final model
     computeSegments(segments, Vp, Ip);
 
     // Display model parameters
     printk("\n");
-    printk("|  --- Complete PV Model Parameters ---  |\n");
-    printk("| Iph_ref = %.6f A                       |\n", Iph_ref);
-    printk("| Is0_ref = %.2e A                       |\n", Is0_ref);
-    printk("| A       = %.6f                         |\n", A);
-    printk("| Rs      = %.6f Ohms                    |\n", Rs);
-    printk("| Rp      = %.6f Ohms                    |\n", Rp);
-    printk("| Conditions: S = %.1f W/m², T = %.1f K  |\n", S, T);
+    printk("|  --- Final PV Model Parameters ---  |\n");
+    printk("| Iph_ref = %.6f A                    |\n", Iph_ref);
+    printk("| Is0_ref = %.2e A                    |\n", Is0_ref);
+    printk("| A       = %.6f                      |\n", A);
+    printk("| Rs      = %.6f Ohms                 |\n", Rs);
+    printk("| Rp      = %.6f Ohms                 |\n", Rp);
+    printk("| Conditions: S = %.1f W/m², T = %.1f K |\n", S, T);
     printk("\n");
 
     // Task creation and startup
