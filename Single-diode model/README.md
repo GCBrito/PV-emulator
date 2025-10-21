@@ -30,12 +30,12 @@ Where:
 - $k$ — Boltzmann constant = 1.3806503 × 10⁻²³ [J/K]
 - $n_s$ - Number of cells in series [–]
 - $q$ — elementary charge = 1.60217646 × 10⁻¹⁹ [C]
-- $E<sub>G0</sub>$ — Bandgap energy at 0 K, equal to 1.166 eV for silicon cells [eV]
-- $k<sub>1</sub>$ — Material-dependent coefficient, equal to 4.73 × 10⁻¹⁹ eV/K for silicon cells [eV/K]
-- $k<sub>1</sub>$ — Empirical constant, equal to 636 K for silicon cells [K]            
+- $E_{G0}$ — Bandgap energy at 0 K, equal to 1.166 eV for silicon cells [eV]
+- $k_1$ — Material-dependent coefficient, equal to 4.73 × 10⁻¹⁹ eV/K for silicon cells [eV/K]
+- $k_2$ — Empirical constant, equal to 636 K for silicon cells [K]            
 - $R_P$ — parallel resistance [Ω]
 
-It can be observed that the current _I<sub>pv</sub>_ is a function of itself, of the output voltage, and of the climatic variables irradiance and temperature (_I<sub>pv</sub> = f(I<sub>pv</sub>, V<sub>pv</sub>, S, T)_). Obviously, it is not possible to analytically isolate the output current _I<sub>pv</sub>_. Therefore, this equation can only be solved using iterative numerical methods. In addition, some parameters of the equation must be determined or specified, as they depend on the photovoltaic module but are not provided in the manufacturers' datasheets. These are the five parameters: _R<sub>s</sub>_, _R<sub>p</sub>_, _A_, _I<sub>S0</sub><sup>ref</sup>_, and _I<sub>PH</sub><sup>ref</sup>_.
+It can be observed that the current _I<sub>pv</sub>_ is a function of itself, of the output voltage, and of the climatic variables irradiance and temperature ($I_{pv}$ = f($I_{pv}$, $V_{pv}$, $S$, $T$)). Obviously, it is not possible to analytically isolate the output current $I_{pv}$. Therefore, this equation can only be solved using iterative numerical methods. In addition, some parameters of the equation must be determined or specified, as they depend on the photovoltaic module but are not provided in the manufacturers' datasheets. These are the five parameters: $R_S$, $R_P$, $A$, $I_{S0}^{ref}$, and $I_{PH}^{ref}$.
 
 From mathematical theory, it is known that solving a system with five unknowns requires five independent equations. Therefore, to solve the PV current equation, it is first necessary to determine the following system of equations:
 
@@ -70,7 +70,7 @@ The algorithms in this repository enable the implementation of the single-diode 
 - **ISCmod** — module short-circuit current under the reference operating condition [A]  
 - **Tref** — reference temperature [K]  
 - **Sref** — reference irradiance [W/m²]  
-- **muICC** — temperature coefficient of the short-circuit current [A/°C or A/K]  
+- **alpha** — temperature coefficient of the short-circuit current [%/°C or %/K]  
 - **T** — operating temperature [K]  
 - **S** — operating irradiance [W/m²]  
 
@@ -81,4 +81,5 @@ This folder contains two **MATLAB** scripts:
 
 # _Usage instructions_
 
-**To use the emulator**, begin by running "tracer_single_diode_emulator.m" to compute the five model parameters. Once obtained, these parameters must be manually inserted into `main.cpp` before uploading the firmware to the SPIN board. For step-by-step guidance, see the [Tutorial](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md).
+**To use the emulator**, start by running `tracer_single_diode_emulator` (in MATLAB or Python) to calculate the five model parameters. Once computed, these parameters must be manually entered into `main.cpp` before uploading the firmware to the SPIN board. For detailed, step-by-step instructions, refer to the [Tutorial](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md).
+
