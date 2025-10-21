@@ -1,41 +1,46 @@
 clc; clear; close all; format long
+%% Module Parameters
 
-%% 1) Module Parameters
+ns      = 54;       % number of series cells
+np      = 1;        % number of parallel branches
 
-ns = 36; % Number of series cells
-np = 1; % Number of parallel branches
-
-VMPmod = 35.0; % Voltage at maximum power point of the module (V)
-IMPmod = 2.59; % Current at maximum power point of the module (A)
-VOCmod = 42.6; % Open-circuit voltage of the module (V)
-ISCmod = 2.72; % Short-circuit current of the module (A)
-
-Vmp_cell = VMPmod / ns;
-Imp_cell = IMPmod / np;
-Voc_cell = VOCmod / ns;
-Isc_cell = ISCmod / np;
+Vmp_mod_ref  = 26.3;     % voltage at maximum power point (V)
+Imp_mod_ref  = 7.61;     % current at maximum power point (A)
+Voc_mod_ref  = 32.9;     % open-circuit voltage (V)
+Isc_mod_ref  = 8.21;     % short-circuit current (A)
 
 Tref = 25 + 273.15; % Reference temperature (K)
 Sref = 1000; % Reference irradiance (W/m²)
 
-muICC = 0.00136; % Temperature coefficient
-%% 2) Operating Conditions
+alpha   = 0.00039;  % temperature coefficient of Isc (%/K)
 
-T = 25 + 273.15; % Current temperature (K)
-S = 1000; % Current irradiance (W/m²)
+%% Operating Conditions
 
-%% 3) Physical Constants
+T = 54.3 + 273.15; % Current temperature (K)
+S = 511; % Current irradiance (W/m²)
+
+%% PV cell parameters 
+
+Vmp_cell_ref = Vmp_mod_ref/ns;
+Imp_cell_ref = Imp_mod_ref/np;
+Voc_cell_ref = Voc_mod_ref/ns;
+Isc_cell_ref = Isc_mod_ref/np;
+
+%% Physical Constants
 
 q = 1.60217662e-19; % Elementary charge (C)
 k = 1.38064852e-23; % Boltzmann constant (J/K)
-Eg = 1.21 * q; % Silicon band gap energy (J)
 
-%% 4) Parameter Estimation via fsolve
+E_G0 = 1.166;            % Band gap energy at 0K (eV)
+k1   = 4.73e-4;          % Coefficient k1 (eV/K)
+k2   = 636;              % Coefficient k2 (K)
 
-x0 = [Isc_cell; 1e-9; 3; 0.01; 2];
+%% Parameter Estimation via fsolve
+
+x0 = [Isc_cell_ref; 1e-9; 3; 0.01; 2];
 opts = optimoptions('fsolve', ...
     'Display', 'off', 'TolFun', 1e-10, 'TolX', 1e-10, 'MaxIter', 1000, 'MaxFunctionEvaluations', 2000);
-fun = @(x) residuals_2_20(x, Voc_cell, Isc_cell, Vmp_cell, Imp_cell, q, k, Tref);
+fun = @(x) residuals_2_20(x, Voc_cell_ref, Isc_cell_ref, Vmp_cell_ref, Imp_cell_ref, q, k, Tref);
 [xsol, ~, exitflag] = fsolve(fun, x0, opts);
 if exitflag <= 0
     warning('fsolve did not converge (exitflag = %d)', exitflag);
@@ -57,19 +62,20 @@ fprintf('Rp      = %.6f Ohms\n', Rp);
 
 V_cell = [
     0.0;
-    0.2 * VMPmod / ns;
-    0.4 * VMPmod / ns;
-    0.6 * VMPmod / ns;
-    0.8 * VMPmod / ns;
-    0.9 * VMPmod / ns;
-    VMPmod / ns;
-    (VMPmod / ns + VOCmod / ns) / 2.0;
-    0.9 * VOCmod / ns;
-    0.95 * VOCmod / ns;
-    VOCmod / ns];
+    0.2 * Vmp_mod_ref / ns;
+    0.4 * Vmp_mod_ref / ns;
+    0.6 * Vmp_mod_ref / ns;
+    0.8 * Vmp_mod_ref / ns;
+    0.9 * Vmp_mod_ref / ns;
+    Vmp_mod_ref / ns;
+    (Vmp_mod_ref / ns + Voc_mod_ref / ns) / 2.0;
+    0.9 * Voc_mod_ref / ns;
+    0.95 * Voc_mod_ref / ns;
+    Voc_mod_ref / ns];
+
 
 I_cell = arrayfun(@(V) solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, ...
-    q, k, Eg, S, Sref, muICC, T, Tref), V_cell);
+    q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2), V_cell);
 points_V = V_cell * ns;
 points_I = I_cell * np;
 
@@ -108,38 +114,59 @@ function I_out = piecewise_pv_model(V_in, points_V, coeffs)
 end
 
 %% Provided Data: (R, V_test, I_test, V*, I*)
-
 mesures = [
+    
+    % ---------------------CS6P-250P---------------------
+    
+    % --- Sref = 1000, Tref = 25, S = 556, T = 33 ---
+    % 3.312101911,35.098381,10.830381,15.96633,4.926764;
+    % 4.470212766,35.093315,8.052373,21.384974,4.906911;
+    % 5.072649573,34.928596,7.081912,24.119793,4.890384;
+    % 5.428571429,34.964813,6.637497,25.479982,4.836957;
+    % 5.846827133,34.940865,6.137167,27.134899,4.766093;
+    % 6.560465116,34.992397,5.522508,28.611193,4.515424;
+    % 7.335802469,35.004902,4.953645,30.103748,4.260068;
+    % 11.3297491,35.064438,3.307633,31.929382,3.011903;
+    % 20.85,35.042049,1.906419,33.620697,1.829092;
+    % 62.91512915,35.042969,0.812353,34.34491,0.796171;
+
+    % --- Sref = 1000, Tref = 25, S = 765, T = 44.5 ---
+    % 3.424196018,34.855976,10.283596,22.807545,6.728934;
+    % 3.684782609,34.869011,9.658541,24.17536,6.696453
+    % 4.031847134,34.885811,8.816074,25.775291,6.513734;
+    % 4.44278607,34.931274,8.078631,27.240286,6.29992;
+    % 5.227356747,34.942135,6.905494,28.715485,5.674942;
+    % 5.995125914,34.961349,6.021228,29.939571,5.156351;
+    % 7.701643489,34.964321,4.749564,30.825687,4.187371;
+    % 13.45162653,34.977104,2.806052,32.122658,2.577053;
+    % 68.56557377,35.020119,0.753771,33.615498,0.723538;
+
+    % ----------Vertex N TSM-NEG21C.20 695W------------
+    
+    % --- Sref = 1000, Tref = 25, S = 200, T = 25 ---
+    % 4.873925501,45.740959,9.644203,17.313847,3.650519;
+    % 8.299711816,46.032471,5.740947,29.145626,3.634901;
+    % 9.694117647,45.859604,4.960142,33.305958,3.602349;
+    % 10.51461988,45.897758,4.461115,36.310131,3.529229;
+    % 12.40837696,45.938385,3.932939,38.277752,3.277086;
+    % 14.13879004,45.959175,3.487038,40.10532,3.042891;
+    % 18.57272727,45.955261,2.704127,41.202496,2.424462;
+    % 37.6460177,45.97047,1.46015,42.821026,1.360115;
+    % 258.6470588,45.98262,0.451527,44.228886,0.434306;
+
     % ---------------------KC200GT---------------------
     
     % --- Sref = 1000, Tref = 25, S = 511, T = 54,3 ---
-    % 3.409547739,30.042597,9.221842,13.882890,4.261477;
-    % 3.837837838,29.833204,7.930077,15.970324,4.245132;
-    % 4.282878412,30.036655,7.134727,17.581207,4.176135;
-    % 4.674074074,29.913689,6.374939,19.258860,4.104277;
-    % 5.430446194,29.912422,5.737882,21.006065,4.029441;
-    % 6.206703911,29.915359,4.927178,22.505482,3.706742;
-    % 7.051359517,30.027420,4.394181,23.636152,3.458890;
-    % 8.111864407,29.946547,3.833536,24.225838,3.101213;
-    % 11.20089286,29.959095,2.824838,25.353563,2.390584;
-    % 15.69277108,29.962294,2.051082,26.291145,1.799772;
-    % 34.67532468,29.970604,1.060586,26.867710,0.950782;
-    % 405.9701493,29.976196,0.295321,27.326483,0.269217;
-
-    % --- Sref = 511, Tref = 54,3, S = 511, T = 54,3 ---
-    % 3.298200514,30.083759,9.238234,13.129311,4.031798;
-    % 4.58778626,29.899143,6.469102,18.305553,3.960665;
-    % 5.436997319,29.930714,5.628777,20.560305,3.866576;
-    % 5.991689751,29.945515,5.095525,21.877769,3.722718;
-    % 6.424068768,29.967121,4.802621,22.681322,3.634977;
-    % 7.182098765,29.964804,4.303484,23.515127,3.377195;
-    % 8.49825784,29.994026,3.657519,24.605215,3.000399;
-    % 9.86328125,29.990040,3.184377,25.463463,2.703740;
-    % 12.61927945,30.060379,2.518887,26.104248,2.187386;
-    % 16.58125,30.009392,1.938024,26.694448,1.723943;
-    % 31.30484988,30.022461, 1.095335,27.238712,0.993773;
-    % 65.39379475,30.024586,0.648094,27.517773,0.593983;
-    % 40.69117647,30.027824,0.280485,27.751440,0.259222;
+    2.969387755,30.078857,10.578335,11.909241,4.188322;
+    3.847117794,29.85693,7.953677,15.661912,4.172224;
+    4.721649485,30.06168,6.533874,18.635529,4.050412;
+    5.596774194,29.935583,5.559875,21.14057,3.926395;
+    6.62611276,29.938969,4.761699,22.638481,3.60058;
+    7.350346566,29.951893,4.303252,23.602148,3.390971;
+    9.27480916,29.965706,3.448748,24.549633,2.825413;
+    12.8680203,29.976023,2.564936,25.56798,2.187756;
+    17.76870748,29.986725,1.936755,26.319908,1.699926;
+    60.97727273,29.984901,0.803749,26.9799,0.723199;
 
     % ---------------------KC85TS---------------------
     
@@ -182,32 +209,7 @@ mesures = [
     % 21.25510204,23.875790, 1.307175,21.090651, 1.154691;
     % 406.0377358,23.883148,0.306018,21.554970,0.276186;
 
-    % ---------------------CS6P-250P---------------------
     
-    % --- Sref = 1000, Tref = 25, S = 556, T = 33 ---
-    % 4.966173362,36.916618,7.636598,23.861177,4.935940;
-    % 5.235789474,36.925896,7.135579,25.287460,4.886562;
-    % 5.670940171,36.925285,6.611194,26.927507,4.821167;
-    % 6.189309577,36.964649,6.070982,28.176317,4.627609;
-    % 7.035799523,37.076538,5.380336,29.874315,4.335190;
-    % 8.924637681,36.992016,4.264987,31.124376,3.588478;
-    % 12.23137255,37.003716,3.019732,32.481518,2.650693;
-    % 18.71348315,37.020912,2.094456,33.569107,1.899170;
-    % 49.46376812,37.018486,0.900303,34.318546,0.834639;
-    % 406.4705882,37.029892,0.242107,34.741459,0.227145;
-
-    % --- Sref = 1000, Tref = 25, S = 765, T = 44.5 ---
-    % 3.276853253,36.058861,11.093060,22.148668,6.813763;
-    % 3.473604827,35.893806,10.355574,23.533447,6.789537;
-    % 3.797527048,35.901566,9.535309,25.083090,6.661966;
-    % 4.232854864,36.052902,8.577839,27.035177,6.432309;
-    % 4.633445946,35.951599, 7.810769,27.919050,6.065634;
-    % 5.251838235,35.942787,6.917910,29.022854,5.586030;
-    % 6.098138748,36.042290,5.907085,30.229673,4.954437;
-    % 13.33891213,35.980782, 2.834330,32.149712,2.532543;
-    % 61.90740741,35.987362,0.760594,33.594578,0.710022;
-    % 421.125,35.992996,0.285993,33.809090,0.268640;
-
     % ---------------Uni-Solar ES-62T-----------------
     
     % --- Sref = 1000, Tref = 25, S = 1000, T = 25 ---
@@ -221,11 +223,9 @@ mesures = [
     % 9.658031088,23.066004,2.557652,18.883083,2.093833;
     % 20.5625,23.081512,1.335646,19.927521,1.153136;
     % 92.95454545,23.119362,0.512176,20.578976,0.455897;
-
-    92.95454545,23.119362,0.512176,20.578976,0.455897;
+    % 92.95454545,23.119362,0.512176,20.578976,0.455897;
     
     ];
-
 if ~isempty(mesures)
     R_data = mesures(:, 1);
     V_violet = mesures(:, 2); % Purple Points (Test Point)
@@ -235,12 +235,14 @@ if ~isempty(mesures)
 else
     R_data = []; V_violet = []; I_violet = []; V_noir = []; I_noir = [];
 end
+
 %% Plotting (Figure Generation)
 
 figure; 
 hold on; 
 
 % 1. Plot "Load Lines" FIRST
+
 if isempty(R_data)
     Rs_to_plot = [0.1, 0.5, 1:1:15, 20:5:50, 60:10:200, 300, 400, 500, 1000];
     Rs_to_plot = sort([Rs_to_plot, inf]);
@@ -261,17 +263,20 @@ for r_val = Rs_to_plot'
 end
 
 % 2. Plot the I-V Model (P-V Curve)
-V_plot = linspace(0, VOCmod, 500);
+
+V_plot = linspace(0, Voc_mod_ref, 500);
 I_plot = modele_pv(V_plot);
 h_model = plot(V_plot, I_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'I-V Curve - Single diode model');
 
 % 3. Plot "Test Points" (Purple Points)
+
 h_test_point = []; 
 if ~isempty(V_violet)
     h_test_point = scatter(V_violet, I_violet, 40, 'm', 'filled', 'DisplayName', 'Test Point');
 end
 
 % 4. Plot "Intersections" (Black Points)
+
 h_intersection = []; 
 if ~isempty(V_noir) && ~isempty(I_noir)
     h_intersection = scatter(V_noir, I_noir, 70, 'ks', 'filled', 'DisplayName', 'Intersection');
@@ -283,17 +288,15 @@ xlabel('Voltage (V)', 'FontSize', 30);
 ylabel('Current (A)', 'FontSize', 30);
 
 % Axis limits to match the provided figure
-xlim([0 1.2 * VOCmod]);
-ylim([0 1.2 * max(I_violet)]);
+xlim([0 1.01*Voc_mod_ref]);
+ylim([0 1.1 * max(I_violet)]);
 
 % Font configurations for axis ticks
 set(gca, 'FontSize', 30); 
 grid off;
-
 % Create the legend and adjust position and font
 legend_handles = [h_model];
 legend_labels = {'I-V Curve - Single diode model'};
-
 if ~isempty(h_test_point) && ishandle(h_test_point)
     legend_handles = [legend_handles, h_test_point];
     legend_labels = [legend_labels, 'Test Point'];
@@ -302,9 +305,7 @@ if ~isempty(h_intersection) && ishandle(h_intersection)
     legend_handles = [legend_handles, h_intersection];
     legend_labels = [legend_labels, 'Intersection'];
 end
-
 leg = legend(legend_handles, legend_labels, 'Location', 'NorthWest', 'FontSize', 20);
-
 set(leg, 'Box', 'on'); 
 set(findall(gcf, '-property', 'FontName'), 'FontName', 'Times New Roman');
 set(findall(gca, '-property', 'FontName'), 'FontName', 'Times New Roman');
@@ -329,24 +330,30 @@ function F = residuals_2_20(x, Voc, Isc, Vmp, Imp, q, k, Tref)
 end
 
 function I = solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, ...
-    q, k, Eg, S, Sref, muICC, T, Tref)
-    Iph = Iph_ref * (S / Sref) + muICC * (T - Tref);
-    gamma = (T / Tref)^3 * exp(Eg / (A * k) * (1 / Tref - 1 / T));
-    I = Is0_ref * gamma; % Initial estimate
-    cap = 700;
+    q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2)
+
+    % 1. Photocurrent with T and S dependency
+    Iph = (S / Sref) * (Iph_ref + alpha * (T - Tref));
+    
+    % 2. Temperature-dependent Band Gap Energy (Varshni's equation)
+    Eg_ref_J = (E_G0 - (k1 * Tref^2) / (Tref + k2)) * q;
+    Eg_J = (E_G0 - (k1 * T^2) / (T + k2)) * q;
+    
+    % 3. Saturation Current with T and Eg(T) dependency
+    exponent_term = (Eg_ref_J / (A * k * Tref)) - (Eg_J / (A * k * T));
+    Is = Is0_ref * (T / Tref)^3 * exp(exponent_term);
+    
+    % 4. Iterative solver (Newton-Raphson)
+    I = Iph; % Initial guess
     for it = 1:30
-        C = q / (A * k * T);
-        a = min(C * (Rs * I + V), cap);
-        expo = exp(a);
-        f = Iph ...
-            - (Rs * I + V) / Rp ...
-            - Is0_ref * gamma * (expo - 1) ...
-            - I;
-        df = -Rs / Rp ...
-            - Is0_ref * gamma * expo * (q * Rs / (A * k * T)) ...
-            - 1;
+        V_diode = V + I * Rs;
+        arg_exp = min(q * V_diode / (A * k * T), 700);
+        expo = exp(arg_exp);
+        f = Iph - Is * (expo - 1) - V_diode / Rp - I;
+        df = -Is * expo * (q * Rs / (A * k * T)) - Rs / Rp - 1;
         dI = -f / df;
         I = I + dI;
-        if abs(dI) < 1e-6, break; end
+        if abs(dI) < 1e-6, break;
+        end
     end
 end
