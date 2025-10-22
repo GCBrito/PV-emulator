@@ -19,8 +19,6 @@ alpha   = 0.00039;  % temperature coefficient of Isc (%/K)
 T = 54.3 + 273.15; % Current temperature (K)
 S = 511; % Current irradiance (W/m²)
 
-%% PV cell parameters 
-
 Vmp_cell_ref = Vmp_mod_ref/ns;
 Imp_cell_ref = Imp_mod_ref/np;
 Voc_cell_ref = Voc_mod_ref/ns;
@@ -315,45 +313,58 @@ hold off;
 
 function F = residuals_2_20(x, Voc, Isc, Vmp, Imp, q, k, Tref)
     Iph = x(1); Is0 = x(2); A = x(3); Rs = x(4); Rp = x(5);
-    C = q / (A * k * Tref);
+
+    C   = q/(A*k*Tref);
+
     cap = 700;
-    a_sc = min(C * Rs * Isc, cap);
-    a_oc = min(C * Voc, cap);
-    a_mp = min(C * (Rs * Imp + Vmp), cap);
-    F = zeros(5, 1);
-    F(1) = Isc - (Iph - Is0 * (exp(a_sc) - 1) - (Rs * Isc) / Rp);
-    F(2) = 0 - (Iph - Is0 * (exp(a_oc) - 1) - (Voc) / Rp);
-    F(3) = Imp - (Iph - Is0 * (exp(a_mp) - 1) - (Rs * Imp + Vmp) / Rp);
-    F(4) = Rs + (q * Is0 * Rp * (Rs - Rp) / (A * k * Tref)) * exp(a_sc);
-    term = 1 + q * (Vmp - Rs * Imp) / (A * k * Tref);
-    F(5) = Iph - 2 * Vmp / Rp - (Is0 * term * (exp(a_mp) - 1));
+    a_sc = min(C*Rs*Isc, cap);
+    a_oc = min(C*Voc, cap);
+    a_mp = min(C*(Rs*Imp+Vmp), cap);
+    a_eq5 = min(C*Is0, cap); 
+
+    F = zeros(5,1);
+
+    F(1) = Isc - ( Iph - Is0*(exp(a_sc)-1) - (Rs*Isc)/Rp );
+    F(2) = 0   - ( Iph - Is0*(exp(a_oc)-1) - (Voc)/Rp );
+    F(3) = Imp - ( Iph - Is0*(exp(a_mp)-1) - (Rs*Imp+Vmp)/Rp );
+    F(4) = Rs + (q*Is0*Rp*(Rs-Rp)/(A*k*Tref))*exp(a_eq5);
+    term_coeff = 1 + q*(Vmp - Rs*Imp)/(A*k*Tref);
+    F(5) = Iph - 2*Vmp/Rp + Is0 - Is0 * term_coeff * exp(a_mp);
 end
 
 function I = solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, ...
-    q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2)
-
-    % 1. Photocurrent with T and S dependency
-    Iph = (S / Sref) * (Iph_ref + alpha * (T - Tref));
+    q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2) 
     
-    % 2. Temperature-dependent Band Gap Energy (Varshni's equation)
-    Eg_ref_J = (E_G0 - (k1 * Tref^2) / (Tref + k2)) * q;
-    Eg_J = (E_G0 - (k1 * T^2) / (T + k2)) * q;
+    % 1. Photocurrent (Iph) 
+    Iph = Iph_ref * (S / Sref) * (1 + alpha * (T - Tref));
     
-    % 3. Saturation Current with T and Eg(T) dependency
-    exponent_term = (Eg_ref_J / (A * k * Tref)) - (Eg_J / (A * k * T));
+    % 2. Calculation of Saturation Current (Is)
+    
+    % 2a. Calculation of band gap energy in eV at temperature T: Eg(T)
+    Eg_T_eV = E_G0 - (k1 * T^2) / (T + k2);
+    
+    % 2b. Calculation of the temperature difference term
+    temp_diff = (1 / Tref) - (1 / T);
+    
+    % 2c. Calculation of the exponent 
+    exponent_term = (q / (A * k)) * Eg_T_eV * temp_diff; 
+    
+    % 2d. Final calculation of Is(T)
     Is = Is0_ref * (T / Tref)^3 * exp(exponent_term);
     
-    % 4. Iterative solver (Newton-Raphson)
+    % 3. Iterative Solver (Newton-Raphson)
     I = Iph; % Initial guess
     for it = 1:30
         V_diode = V + I * Rs;
-        arg_exp = min(q * V_diode / (A * k * T), 700);
+        arg_exp = min(q * V_diode / (A * k * T), 700); 
         expo = exp(arg_exp);
+        
         f = Iph - Is * (expo - 1) - V_diode / Rp - I;
         df = -Is * expo * (q * Rs / (A * k * T)) - Rs / Rp - 1;
+        
         dI = -f / df;
         I = I + dI;
-        if abs(dI) < 1e-6, break;
-        end
+        
+        if abs(dI) < 1e-6, break;end
     end
 end
