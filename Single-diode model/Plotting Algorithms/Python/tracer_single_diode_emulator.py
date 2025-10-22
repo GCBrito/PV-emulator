@@ -16,18 +16,19 @@ def residuals_2_20(x, Voc, Isc, Vmp, Imp, q, k, Tref):
     cap = 700  # Safety cap to prevent overflow in exp()
 
     # Arguments for the exponential function, capped for stability
-    a_sc = min(C * Rs * Isc, cap)
-    a_oc = min(C * Voc, cap)
-    a_mp = min(C * (Rs * Imp + Vmp), cap)
+    a_sc = min(C*Rs*Isc, cap)
+    a_oc = min(C*Voc, cap)
+    a_mp = min(C*(Rs*Imp+Vmp), cap)
+    a_eq5 = min(C*Is0, cap)
 
     F = np.zeros(5)
-    F[0] = Isc - (Iph - Is0 * (np.exp(a_sc) - 1) - (Rs * Isc) / Rp)
-    F[1] = 0 - (Iph - Is0 * (np.exp(a_oc) - 1) - Voc / Rp)
-    F[2] = Imp - (Iph - Is0 * (np.exp(a_mp) - 1) - (Rs * Imp + Vmp) / Rp)
-    F[3] = Rs + (q * Is0 * Rp * (Rs - Rp) / (A * k * Tref)) * np.exp(a_sc)
-    term = 1 + q * (Vmp - Rs * Imp) / (A * k * Tref)
-    F[4] = Iph - 2 * Vmp / Rp - (Is0 * term * (np.exp(a_mp) - 1))
-    
+    F[0] = Isc - ( Iph - Is0*(np.exp(a_sc)-1) - (Rs*Isc)/Rp )
+    F[1] = 0   - ( Iph - Is0*(np.exp(a_oc)-1) - (Voc)/Rp )
+    F[2] = Imp - ( Iph - Is0*(np.exp(a_mp)-1) - (Rs*Imp+Vmp)/Rp )
+    F[3] = Rs + (q*Is0*Rp*(Rs-Rp)/(A*k*Tref))*np.exp(a_eq5)
+    term_coeff = 1 + q*(Vmp - Rs*Imp)/(A*k*Tref)
+    F[4] = Iph - 2*Vmp/Rp + Is0 - Is0 * term_coeff * np.exp(a_mp)
+      
     return F
 
 def solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp,
