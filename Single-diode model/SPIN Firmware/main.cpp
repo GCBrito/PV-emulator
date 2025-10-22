@@ -172,16 +172,16 @@ void computeVoltagePoints(float32_t V[N_POINTS]) {
 // - The calculated current [A].
 float32_t solve_I_V_final_model(float32_t V) {
     // 1. Photocurrent with T and S dependency, using alpha
-    float32_t Iph = (S / Sref) * (Iph_ref + alpha * (T - Tref));
+    float32_t Iph = Iph_ref * (S / Sref) * (1.0f + alpha * (T - Tref));
 
     // 2. Temperature-dependent Band Gap Energy (Eg) (Varshni's equation)
     // Eg is calculated in eV and then converted to Joules
-    float32_t Eg_ref_J = (E_G0 - (k1 * Tref * Tref) / (Tref + k2)) * q;
-    float32_t Eg_J = (E_G0 - (k1 * T * T) / (T + k2)) * q;
+    float32_t Eg_T_eV = E_G0 - (k1 * T * T) / (T + k2);
+    float32_t temp_diff = (1.0f / Tref) - (1.0f / T);
+    float32_t exponent_term = (q / (A * k)) * Eg_T_eV * temp_diff;
 
     // 3. Saturation Current (Is) with T and Eg(T) dependency
     // Using a robust form of the equation
-    float32_t exponent_term = (Eg_ref_J / (A * k * Tref)) - (Eg_J / (A * k * T));
     float32_t Is = Is0_ref * powf(T / Tref, 3.0f) * expf(exponent_term);
 
     // 4. Iterative solver (Newton-Raphson) for the diode equation
