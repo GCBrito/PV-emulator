@@ -74,7 +74,7 @@ The algorithms in this repository enable the implementation of the single-diode 
 - **T** — operating temperature [K]  
 - **S** — operating irradiance [W/m²]  
 
-This folder contains two **auxiliary plotting scripts** (both in MATLAB and in Python):
+This folder contains three **auxiliary plotting scripts** (both in MATLAB and in Python):
 
 - `compute_5_parameters` — Determines the five parameters required for the single-diode model by solving the nonlinear system of equations.
 - `tracer_single_diode_emulator` — Determines the five parameters required for the single-diode model by solving the nonlinear system of equations. Additionally, it can plot both the emulated operating points as well as the PV emulator’s testing points and the load lines, and compare them to the theoretical I–V curve.
