@@ -1,7 +1,6 @@
 # _Test's configuration_
 
 To carry out the laboratory experiments, the setup shown in the following figure was implemented:   
-
 <p align="center">
 <img width="500" height="400" alt="Test's configuration" src="https://github.com/user-attachments/assets/f6368711-5379-4dcc-9017-c8cffc4b75b9" />
 </p>
@@ -13,6 +12,10 @@ It consists of the following elements:
 - A variable resistive load.  
 - An ammeter to measure the output current (_I<sub>out</sub>_).  
 - A voltmeter to measure the output voltage (_V<sub>out</sub>_).
+
+In practice, to reproduce the configuration shown in the schematic above, the components must be wired as shown in the following diagram:
+
+<img width="12836" height="3871" alt="Wiring" src="https://github.com/user-attachments/assets/08f619d8-2668-4a8e-92e8-12ddfa478eb3" />
 
 # _First steps_
 
