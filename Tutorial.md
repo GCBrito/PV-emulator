@@ -15,7 +15,9 @@ It consists of the following elements:
 
 In practice, to reproduce the configuration shown in the schematic above, the components must be wired as shown in the following diagram:
 
-<img width="12836" height="3871" alt="Wiring" src="https://github.com/user-attachments/assets/08f619d8-2668-4a8e-92e8-12ddfa478eb3" />
+<p align="center">
+<img width="12842" height="3871" alt="Wiring" src="https://github.com/user-attachments/assets/1070ef54-269a-4098-aad3-3bb06e2f69b2" />
+</p>
 
 # _First steps_
 
@@ -75,4 +77,6 @@ This is done by varying the load, measuring the output voltage ($V_{out}$) and c
 
 The figure below illustrates the accuracy of the system’s response by comparing the I–V curve obtained using the PV emulator (based on the single-diode model) with **experimental data** from a real solar panel:
 
+<p align="center">
 <img width="1366" height="643" alt="Real PV data vs Single-diode emulator - CanadianSolar CS6P-250P (ref = STC, S = 765 and T = 44,5)" src="https://github.com/user-attachments/assets/6cb59bc1-386b-4b84-984c-1f645e6c6a8c" />
+</p>
