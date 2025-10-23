@@ -76,10 +76,11 @@ The algorithms in this repository enable the implementation of the single-diode 
 
 This folder contains two **auxiliary plotting scripts** (both in MATLAB and in Python):
 
+- `compute_5_parameters` — Determines the five parameters required for the single-diode model by solving the nonlinear system of equations.
 - `tracer_single_diode_emulator` — Determines the five parameters required for the single-diode model by solving the nonlinear system of equations. Additionally, it can plot both the emulated operating points as well as the PV emulator’s testing points and the load lines, and compare them to the theoretical I–V curve.
 - `comparison_single_diode_emulator_real_pv` — Compares the emulated I–V curve to experimental data from a real PV module.
 
 # _Usage instructions_
 
-**To use the emulator**, start by running `tracer_single_diode_emulator` (in MATLAB or Python) to calculate the five model parameters. Once computed, these parameters must be manually entered into `main.cpp` before uploading the firmware to the SPIN board. For detailed, step-by-step instructions, refer to the [Tutorial](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md).
+**To use the emulator**, start by running `compute_5_parameters` (in MATLAB or Python) to calculate the five model parameters. Once computed, these parameters must be manually entered into `main.cpp` before uploading the firmware to the SPIN board. For detailed, step-by-step instructions, refer to the [Tutorial](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md).
 
