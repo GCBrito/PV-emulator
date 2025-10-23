@@ -7,11 +7,11 @@ To carry out the laboratory experiments, the setup shown in the following figure
 
 It consists of the following elements:
 
-- A DC power supply (_V<sub>in</sub>_).  
+- A DC power supply ($V_in$).  
 - The **OwnTech** board, running the Emulator's algorithm.  
 - A variable resistive load.  
-- An ammeter to measure the output current (_I<sub>out</sub>_).  
-- A voltmeter to measure the output voltage (_V<sub>out</sub>_).
+- An ammeter to measure the output current ($I_{out}$).  
+- A voltmeter to measure the output voltage ($V_{out}$).
 
 In practice, to reproduce the configuration shown in the schematic above, the components must be wired as shown in the following diagram:
 
@@ -58,3 +58,21 @@ In addition, the **OwnTech** board has a maximum output current limitation of **
 This constraint must be taken into account when selecting the PV module to be emulated — in particular, the short-circuit current (_I<sub>SC</sub>_) must remain below this value.
 
 Finally, the limits of the external sensors (ammeter and voltmeter), as well as those of the connected load, must also be respected to ensure that the peripheral equipment is not exposed to potentially hazardous operating conditions.
+
+# _PV Emulator Test: Reproducing the I–V Curve of a Solar Panel_
+
+The objective of this test is to reproduce the **current–voltage (I–V) characteristic** of a solar panel using a **variable load** and the **PV emulator**.  
+This is done by varying the load, measuring the output voltage ($V_{out}$) and current ($I_{out}$), and then plotting the measured points on a graph.
+
+## Procedure
+
+1. Select the **PV panel** of interest.  
+2. If using the emulator based on the single-diode model, determine the **operating conditions** (irradiance and temperature). 
+3. Adjust the variable load to a **small resistance value** *(be cautious with high current levels!)*.  
+4. **Measure** $V_{out}$ and $I_{out}$.  
+5. Gradually **increase the resistance** and repeat step 4 until $V_{out}$ approaches zero.  
+6. **Plot** all collected data points ($V_{out}$, $I_{out}$) using your preferred software (e.g., Excel, Python, MATLAB, etc.).
+
+The figure below illustrates the accuracy of the system’s response by comparing the I–V curve obtained using the PV emulator (based on the single-diode model) with **experimental data** from a real solar panel:
+
+<img width="1366" height="643" alt="Real PV data vs Single-diode emulator - CanadianSolar CS6P-250P (ref = STC, S = 765 and T = 44,5)" src="https://github.com/user-attachments/assets/6cb59bc1-386b-4b84-984c-1f645e6c6a8c" />
