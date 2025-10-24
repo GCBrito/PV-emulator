@@ -78,5 +78,6 @@ This is done by varying the load, measuring the output voltage ($V_{out}$) and c
 The figure below illustrates the accuracy of the system’s response by comparing the I–V curve obtained using the PV emulator (based on the single-diode model) with **experimental data** from a real solar panel:
 
 <p align="center">
-<img width="1366" height="643" alt="Real PV data vs Single-diode emulator - CanadianSolar CS6P-250P (ref = STC, S = 765 and T = 44,5)" src="https://github.com/user-attachments/assets/6cb59bc1-386b-4b84-984c-1f645e6c6a8c" />
+<img width="1366" height="643" alt="Real PV data vs Single-diode emulator - CanadianSolar CS6P-250P (ref = STC, S = 765 and T = 44,5)" src="https://github.com/user-attachments/assets/16d85020-8595-4555-a589-2402386ad9f7" />
+src="https://github.com/user-attachments/assets/6cb59bc1-386b-4b84-984c-1f645e6c6a8c" />
 </p>
