@@ -78,35 +78,34 @@ hold on; grid on;
 
 % Émulateur complet - Uni‑Solar ES‑62T (S = 1000 W/m^2 et T = 25°C)
 V_complete = [
-    0
-    11.90;
-    12.39;
-    13.38;
-    14.47;
-    15.04;
-    16.60;
-    18.09;
-    18.88;
-    19.93;
-    20.58;
-    21;
+    0;
+    9.063915;
+    10.677806;
+    12.169374;
+    13.542478;
+    15.171309;
+    16.019594;
+    16.904531;
+    17.930962;
+    18.904875;
+    20.006903;
+    20.9;
 ];
 
 I_complete = [
-    5.1;
-    4.62;
-    4.56;
-    4.44;
-    4.21;
-    4.08;
-    3.38;
-    2.68;
-    2.09;
-    1.15;
-    0.46;
+    5.06;
+    4.823837;
+    4.712195;
+    4.598453;
+    4.414268;
+    4.023467;
+    3.644424;
+    3.249001;
+    2.790355;
+    2.093971;
+    1.085319;
     0;
 ];
-
 
 h1 = plot(V_complete,  I_complete,   '-b',  'LineWidth',2);     
 % % Émulateur simple 
@@ -179,7 +178,7 @@ h1 = plot(V_complete,  I_complete,   '-b',  'LineWidth',2);
 %     0
 % ];
 
-% Émulateur simple -Uni‑Solar ES‑62T (S = 1000 W/m^2 et T = 25°C)
+% Émulateur simple - Uni‑Solar ES‑62T (S = 1000 W/m^2 et T = 25°C)
 V_simple = [
     0;
     10.14;
@@ -295,7 +294,8 @@ V_commercial = [
     20.02;
     20.5;
     20.94;
-    21.00
+    21.00;
+    20.9;
 ];
 
 I_commercial = [
@@ -331,7 +331,8 @@ I_commercial = [
     1.24;
     0.86;
     0.51;
-    0.46
+    0.46;
+    0;
 ];
 
 h3 = plot(V_commercial, I_commercial, '-m', 'LineWidth', 2);  % plot émulateur commercial
