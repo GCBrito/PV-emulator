@@ -10,14 +10,8 @@ Voc_mod_ref  = 34.2;     % open-circuit voltage (V)
 Isc_mod_ref  = 7.19;     % short-circuit current (A)
 
 Tref = 25 + 273.15; % Reference temperature (K)
-Sref = 1000; % Reference irradiance (W/m²)
-
-alpha   = 0.00065;  % temperature coefficient of Isc (%/K)
 
 %% Operating Conditions
-
-T = 44.5 + 273.15; % Current temperature (K)
-S = 765; % Current irradiance (W/m²)
 
 Vmp_cell_ref = Vmp_mod_ref/ns;
 Imp_cell_ref = Imp_mod_ref/np;
