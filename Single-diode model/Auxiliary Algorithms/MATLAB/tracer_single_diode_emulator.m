@@ -1,23 +1,23 @@
 clc; clear; close all; format long
 %% Module Parameters
 
-ns      = 54;       % number of series cells
+ns      = 60;       % number of series cells
 np      = 1;        % number of parallel branches
 
-Vmp_mod_ref  = 26.3;     % voltage at maximum power point (V)
-Imp_mod_ref  = 7.61;     % current at maximum power point (A)
-Voc_mod_ref  = 32.9;     % open-circuit voltage (V)
-Isc_mod_ref  = 8.21;     % short-circuit current (A)
+Vmp_mod_ref  = 30.1;     % voltage at maximum power point (V)
+Imp_mod_ref  = 8.30;     % current at maximum power point (A)
+Voc_mod_ref  = 37.2;     % open-circuit voltage (V)
+Isc_mod_ref  = 8.87;     % short-circuit current (A)
 
 Tref = 25 + 273.15; % Reference temperature (K)
 Sref = 1000; % Reference irradiance (W/m²)
 
-alpha   = 0.00039;  % temperature coefficient of Isc (%/K)
+alpha   = 0.00065;  % temperature coefficient of Isc (%/K)
 
 %% Operating Conditions
 
-T = 54.3 + 273.15; % Current temperature (K)
-S = 511; % Current irradiance (W/m²)
+T = 44.5 + 273.15; % Current temperature (K)
+S = 765; % Current irradiance (W/m²)
 
 Vmp_cell_ref = Vmp_mod_ref/ns;
 Imp_cell_ref = Imp_mod_ref/np;

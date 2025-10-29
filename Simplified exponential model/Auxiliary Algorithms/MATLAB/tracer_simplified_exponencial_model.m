@@ -1,10 +1,10 @@
 clc; clear; close all;
 %% 1) Panel Parameters
 
-Vmp = 15.0; % Maximum Power Voltage (V)
-Imp = 4.1;  % Maximum Power Current (A)
-Voc = 21.0; % Open-Circuit Voltage (V)
-Isc = 5.1;  % Short-Circuit Current (A)
+Vmp = 17.4; % Maximum Power Voltage (V)
+Imp = 5.02;  % Maximum Power Current (A)
+Voc = 21.7; % Open-Circuit Voltage (V)
+Isc = 5.34;  % Short-Circuit Current (A)
 
 %% 2) Simplified exponential equation constant
 
@@ -87,29 +87,29 @@ measurements = [
      % 410.2941176,30.012428,0.284112,27.971466, 0.264791;
 
      % ---------------------KC85TS---------------------
-     % 2.528599606,23.775753,9.540161,13.240793,5.312946;
-     % 2.694552529,23.927464,8.889205,14.250062,5.293989;
-     % 2.948207171,23.923685,8.276764,15.192984,5.256245;
-     % 3.116,23.798820,7.758160,15.953911,5.200803;
-     % 3.481404959,23.811413,6.968660,17.226923,5.041640;
-     % 4.040540541,23.839123,6.009305,18.291187,4.610795;
-     % 4.905370844,23.851524,4.968151,19.491007,4.059877;
-     % 6.158385093,23.908186,3.995351,20.092628,3.357725;
-     % 8.023622047,23.868225,3.134047,20.618151,2.707292;
-     % 15.85606061,23.903660,1.681039,21.106844,1.484351;
-     % 405.6603774,23.868862,0.325685,21.582323,0.294486;
+     2.528599606,23.775753,9.540161,13.240793,5.312946;
+     2.694552529,23.927464,8.889205,14.250062,5.293989;
+     2.948207171,23.923685,8.276764,15.192984,5.256245;
+     3.116,23.798820,7.758160,15.953911,5.200803;
+     3.481404959,23.811413,6.968660,17.226923,5.041640;
+     4.040540541,23.839123,6.009305,18.291187,4.610795;
+     4.905370844,23.851524,4.968151,19.491007,4.059877;
+     6.158385093,23.908186,3.995351,20.092628,3.357725;
+     8.023622047,23.868225,3.134047,20.618151,2.707292;
+     15.85606061,23.903660,1.681039,21.106844,1.484351;
+     405.6603774,23.868862,0.325685,21.582323,0.294486;
 
      % ---------------Uni-Solar ES-62T-----------------
-     2.159645233,22.119232,10.492447,10.140304,4.810140;
-     2.591224018,21.972612,8.881744,11.602366,4.689895;
-     2.891203704,22.107285,7.773019,12.875836,4.527201;
-     3.356968215,21.984802,6.669855,14.143713,4.290987;
-     3.854497354,22.010578,6.045714,14.959622,4.109006;
-     5.061919505,22.015034,4.473690,16.689295,3.391443;
-     6.518518519,22.034122,3.533989,17.921898,2.874441;
-     9.083373964,22.046028,2.588672,18.896595,2.218861;
-     18.08256881,22.052059,1.446311,19.905468,1.305524;
-     58.02857143,22.056940,0.659405,20.491583,0.612608;
+     % 2.159645233,22.119232,10.492447,10.140304,4.810140;
+     % 2.591224018,21.972612,8.881744,11.602366,4.689895;
+     % 2.891203704,22.107285,7.773019,12.875836,4.527201;
+     % 3.356968215,21.984802,6.669855,14.143713,4.290987;
+     % 3.854497354,22.010578,6.045714,14.959622,4.109006;
+     % 5.061919505,22.015034,4.473690,16.689295,3.391443;
+     % 6.518518519,22.034122,3.533989,17.921898,2.874441;
+     % 9.083373964,22.046028,2.588672,18.896595,2.218861;
+     % 18.08256881,22.052059,1.446311,19.905468,1.305524;
+     % 58.02857143,22.056940,0.659405,20.491583,0.612608;
 ];
 
 % Extract columns for easier use
@@ -149,17 +149,17 @@ for r_val = Rs_to_plot'
         plot(V_line_range, I_line, '--', 'LineWidth', 0.8, 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
     end
 end
-h_load_line_legend = plot(NaN, NaN, '--', 'Color', [0.5 0.5 0.5], 'DisplayName', 'Load Line');
+h_load_line_legend = plot(NaN, NaN, '--', 'Color', [0.5 0.5 0.5], 'DisplayName', 'Droite de charge');
 
 % 2. Plot the I-V Model (PV Curve)
 V_plot = linspace(0, Voc, 500);
 I_plot = pv_model(V_plot);
-h_model = plot(V_plot, I_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'I-V Curve - Simplified exponencial model');
+h_model = plot(V_plot, I_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Modèle I-V');
 
 % 3. Plot "Test Points" (Magenta Points)s
 h_test_point = []; 
 if ~isempty(V_magenta)
-    h_test_point = scatter(V_magenta, I_magenta, 40, 'm', 'filled', 'DisplayName', 'Test Point');
+    h_test_point = scatter(V_magenta, I_magenta, 40, 'm', 'filled', 'DisplayName', 'Point de test');
 end
 
 % 4. Plot "Intersections" (Black Points)
@@ -170,8 +170,8 @@ end
 
 %% Plot Configurations
 
-xlabel('Voltage (V)', 'FontSize', 30); 
-ylabel('Current (A)', 'FontSize', 30); 
+xlabel('Tension (V)', 'FontSize', 30); 
+ylabel('Courant (A)', 'FontSize', 30); 
 
 % Axis limits
 xlim([0 1.2 * Voc]); 
@@ -180,15 +180,15 @@ set(gca, 'FontSize', 30);
 grid off;
 
 legend_handles = [h_model];
-legend_labels = {'I-V Curve - Simplified exponencial model'};
+legend_labels = {'Modèle I-V'};
 
 if exist('h_load_line_legend', 'var') && ishandle(h_load_line_legend)
     legend_handles = [legend_handles, h_load_line_legend];
-    legend_labels = [legend_labels, 'Load Line'];
+    legend_labels = [legend_labels, 'Droite de charge'];
 end
 if ~isempty(h_test_point) && ishandle(h_test_point)
     legend_handles = [legend_handles, h_test_point];
-    legend_labels = [legend_labels, 'Test Point'];
+    legend_labels = [legend_labels, 'Point de test'];
 end
 if ~isempty(h_intersection) && ishandle(h_intersection)
     legend_handles = [legend_handles, h_intersection];
