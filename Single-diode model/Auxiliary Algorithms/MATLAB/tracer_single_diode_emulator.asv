@@ -295,11 +295,11 @@ end
 
 %% Plot Configurations
 
-xlabel('Tension (V)', 'FontSize', 30); 
-ylabel('Courant (A)', 'FontSize', 30);
+xlabel('Voltage (V)', 'FontSize', 30); 
+ylabel('Current (A)', 'FontSize', 30);
 
 % Axis limits to match the provided figure
-xlim([0 24]);
+xlim([0 1.01*Voc_mod_ref]);
 ylim([0 1.1 * max(I_violet)]);
 
 % Font configurations for axis ticks
@@ -310,7 +310,7 @@ legend_handles = [h_model];
 legend_labels = {'Modèle I-V'};
 if ~isempty(h_test_point) && ishandle(h_test_point)
     legend_handles = [legend_handles, h_test_point];
-    legend_labels = [legend_labels, 'Point de test'];
+    legend_labels = [legend_labels, 'Test Point'];
 end
 if ~isempty(h_intersection) && ishandle(h_intersection)
     legend_handles = [legend_handles, h_intersection];
