@@ -1,45 +1,42 @@
 clc; clear; close all; format long
+
 %% Module Parameters
 
-ns      = 72;       % number of series cells
+ns      = 60;       % number of series cells
 np      = 1;        % number of parallel branches
 
-Vmp_mod_ref  = 17.4;     % voltage at maximum power point (V)
-Imp_mod_ref  = 5.02;     % current at maximum power point (A)
-Voc_mod_ref  = 21.7;     % open-circuit voltage (V)
-Isc_mod_ref  = 5.34;     % short-circuit current (A)
+Vmp_mod_ref  = 30.1;     % voltage at maximum power point (V)
+Imp_mod_ref  = 8.30;     % current at maximum power point (A)
+Voc_mod_ref  = 37.2;     % open-circuit voltage (V)
+Isc_mod_ref  = 8.87;     % short-circuit current (A)
 
 Tref = 25 + 273.15; % Reference temperature (K)
 Sref = 1000; % Reference irradiance (W/m²)
 
-alpha   = 0.000397;  % temperature coefficient of Isc (%/K)
+alpha   = 0.00065;  % temperature coefficient of Isc (%/K)
+beta = -0.0037; % temperature coefficient of Voc (%/K)
 
 %% Operating Conditions
 
-T = 25 + 273.15; % Current temperature (K)
-S = 1000; % Current irradiance (W/m²)
-
-Vmp_cell_ref = Vmp_mod_ref/ns;
-Imp_cell_ref = Imp_mod_ref/np;
-Voc_cell_ref = Voc_mod_ref/ns;
-Isc_cell_ref = Isc_mod_ref/np;
+T = 44.5 + 273.15; % Current temperature (K)
+S = 765; % Current irradiance (W/m²)
 
 %% Physical Constants
 
 q = 1.60217662e-19; % Elementary charge (C)
 k = 1.38064852e-23; % Boltzmann constant (J/K)
-
 E_G0 = 1.166;            % Band gap energy at 0K (eV)
 k1   = 4.73e-4;          % Coefficient k1 (eV/K)
 k2   = 636;              % Coefficient k2 (K)
 
 %% Parameter Estimation via fsolve
 
-x0 = [Isc_cell_ref; 1e-9; 3; 0.01; 2];
+x0 = [Isc_mod_ref; 1e-9; ns; 0.05; 500];
 opts = optimoptions('fsolve', ...
     'Display', 'off', 'TolFun', 1e-10, 'TolX', 1e-10, 'MaxIter', 1000, 'MaxFunctionEvaluations', 2000);
-fun = @(x) residuals_2_20(x, Voc_cell_ref, Isc_cell_ref, Vmp_cell_ref, Imp_cell_ref, q, k, Tref);
+fun = @(x) residuals_2_20(x, Voc_mod_ref, Isc_mod_ref, Vmp_mod_ref, Imp_mod_ref, q, k, Tref);
 [xsol, ~, exitflag] = fsolve(fun, x0, opts);
+
 if exitflag <= 0
     warning('fsolve did not converge (exitflag = %d)', exitflag);
 end
@@ -56,26 +53,53 @@ fprintf('A       = %.6f\n', A);
 fprintf('Rs      = %.6f Ohms\n', Rs);
 fprintf('Rp      = %.6f Ohms\n', Rp);
 
-%% Characteristic Points (used to build the I-V model)
+%% Characteristic Points (Adaptive Embedded Strategy - High Precision Knee)
 
-V_cell = [
-    0.0;
-    0.2 * Vmp_mod_ref / ns;
-    0.4 * Vmp_mod_ref / ns;
-    0.6 * Vmp_mod_ref / ns;
-    0.8 * Vmp_mod_ref / ns;
-    0.9 * Vmp_mod_ref / ns;
-    Vmp_mod_ref / ns;
-    (Vmp_mod_ref / ns + Voc_mod_ref / ns) / 2.0;
-    0.9 * Voc_mod_ref / ns;
-    0.95 * Voc_mod_ref / ns;
-    Voc_mod_ref / ns];
+Voc_estimation = Voc_mod_ref * (1 + beta * (T - Tref));
 
+Vmp_estimation = Vmp_mod_ref * (Voc_estimation / Voc_mod_ref);
 
-I_cell = arrayfun(@(V) solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, ...
-    q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2), V_cell);
-points_V = V_cell * ns;
-points_I = I_cell * np;
+factors = [
+    0.00;  
+    0.20;   
+    0.40;   
+    0.60;   
+    0.70;   
+    0.80;   
+    0.85; 
+    0.88; 
+    0.90; 
+    0.92; 
+    0.93; 
+    0.94; 
+    0.95; 
+    0.96; 
+    0.97; 
+    0.98; 
+    0.99; 
+    1.00;   
+    1.01; 
+    1.02; 
+    1.03; 
+    1.04;
+    1.05;   
+    1.08;
+    1.12;   
+];
+V_mod = factors * Vmp_estimation;
+
+V_mod = V_mod(V_mod < Voc_estimation); 
+V_mod = V_mod(V_mod >= 0);
+
+V_mod = [V_mod; Voc_estimation];
+
+V_mod = unique(V_mod);
+
+I_mod = arrayfun(@(V) solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, ...
+    q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2, ns), V_mod);
+
+points_V = V_mod;
+points_I = I_mod;
 
 %% Piecewise PV Model
 
@@ -89,6 +113,7 @@ end
 
 % MATLAB function for the PV model (accepts a voltage vector)
 modele_pv = @(V) piecewise_pv_model(V, points_V, coeffs);
+
 function I_out = piecewise_pv_model(V_in, points_V, coeffs)
     I_out = zeros(size(V_in)); % Initialize the output current array
     for k = 1:numel(V_in) % Iterate over each voltage input
@@ -117,33 +142,37 @@ mesures = [
     % ---------------------CS6P-250P---------------------
     
     % --- Sref = 1000, Tref = 25, S = 765, T = 44.5 ---
-    % 2.72	34.899384	13.178291	18.167007	6.86001;
-    % 3.06259542	34.891418	11.570683	20.578102	6.824104;
-    % 3.249632893	34.907417	10.458957	22.671808	6.792924;
-    % 3.593272171	34.944702	9.845646	24.037628	6.772585;
-    % 3.8453125	34.963158	9.269545	25.142115	6.665758;
-    % 4.2224	34.947876	8.426744	26.911085	6.488887;
-    % 4.848695652	34.970322	7.38725	28.36615	5.992162;
-    % 5.768031189	34.995056	6.243422	30.048498	5.360912;
-    % 7.796954315	34.994736	4.719484	31.099342	4.194141;
-    % 15.27358491	35.008148	2.549782	32.679184	2.380154;
-    % 33.6969697	35.006821	1.366153	33.609787	1.311633;
-    % 211.4375	35.009415	0.532228	34.009476	0.517026;
+    3.045769764	35.788612	10.870403	22.410074	6.806817;
+    3.246175243	36.241249	10.316313	23.793491	6.772975;
+    3.438202247	35.789833	9.643972	24.939365	6.720191;
+    3.644886364	35.790398	9.090423	26.093544	6.627513;
+    3.837445573	35.790707	8.701878	26.855986	6.529558;
+    4.035450517	35.789951	8.216433	27.721462	6.36412;
+    4.219364599	35.790665	7.880837	28.259157	6.222456;
+    4.44773791	36.241096	7.531668	28.892447	6.004463;
+    4.791118421	35.791084	6.966293	29.474039	5.736758;
+    5.183246073	35.791519	6.47911	30.01722	5.433825;
+    5.810344828	35.791901	5.848813	30.604082	5.001063;
+    6.585987261	35.791687	5.091945	31.287796	4.451194;
+    8.554054054	35.795143	4.074923	31.859179	3.626852;
+    12.07089552	35.795879	2.980124	32.497772	2.705546;
+    29.56637168	36.24099	1.421714	33.463177	1.312742;
+
 
     % ---------------- KC85TS - charge R ----------------- 
     
     % --- Sref = 1000, Tref = 25, S = 1000, T = 25 ---
-    2.274319066	22.960472	10.105235	12.117974	5.333295;
-    2.784708249	23.073624	8.583916	14.291578	5.316794;
-    3.110204082	23.067675	7.747358	15.696717	5.271796;
-    3.346391753	22.981272	7.082609	16.649363	5.131176;
-    3.609341826	22.994511	6.609072	17.420082	5.006872;
-    3.981818182	22.998159	5.965241	17.944386	4.654398;
-    4.965147453	23.00153	4.872079	18.909792	4.005386;
-    5.648967552	23.004377	4.263049	19.494135	3.61255;
-    8.12704918	23.008121	3.123704	20.138874	2.73416;
-    11.1147541	23.009827	2.33631	20.592268	2.090842;
-    33.87096774	23.009777	1.063441	21.18466	0.979089;
+    % 2.274319066	22.960472	10.105235	12.117974	5.333295;
+    % 2.784708249	23.073624	8.583916	14.291578	5.316794;
+    % 3.110204082	23.067675	7.747358	15.696717	5.271796;
+    % 3.346391753	22.981272	7.082609	16.649363	5.131176;
+    % 3.609341826	22.994511	6.609072	17.420082	5.006872;
+    % 3.981818182	22.998159	5.965241	17.944386	4.654398;
+    % 4.965147453	23.00153	4.872079	18.909792	4.005386;
+    % 5.648967552	23.004377	4.263049	19.494135	3.61255;
+    % 8.12704918	23.008121	3.123704	20.138874	2.73416;
+    % 11.1147541	23.009827	2.33631	20.592268	2.090842;
+    % 33.87096774	23.009777	1.063441	21.18466	0.979089;
 
     % --------------- KC85TS - charge R+L --------------- 
     
@@ -237,6 +266,7 @@ mesures = [
     % 199.9090909	46.031281	0.478006	44.203873	0.459029;
     
     ];
+
 if ~isempty(mesures)
     R_data = mesures(:, 1);
     V_violet = mesures(:, 2); % Purple Points (Test Point)
@@ -253,7 +283,6 @@ figure;
 hold on; 
 
 % 1. Plot "Load Lines" FIRST
-
 if isempty(R_data)
     Rs_to_plot = [0.1, 0.5, 1:1:15, 20:5:50, 60:10:200, 300, 400, 500, 1000];
     Rs_to_plot = sort([Rs_to_plot, inf]);
@@ -261,7 +290,9 @@ else
     Rs_to_plot = R_data; % Use resistances from your data
     Rs_to_plot = sort(unique(Rs_to_plot));
 end
+
 V_line = linspace(0, max(V_violet) * 1.25, 100);
+
 for r_val = Rs_to_plot'
     if isinf(r_val) % Open circuit (I = 0)
         plot(V_line, zeros(size(V_line)), 'k--', 'LineWidth', 0.8, 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
@@ -274,20 +305,18 @@ for r_val = Rs_to_plot'
 end
 
 % 2. Plot the I-V Model (P-V Curve)
-
-V_plot = linspace(0, Voc_mod_ref, 500);
+% Ajustado para usar o Voc_op (calculado) como limite, não o Voc de referência
+V_plot = linspace(0, max(points_V), 500); 
 I_plot = modele_pv(V_plot);
 h_model = plot(V_plot, I_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Modèle I-V');
 
 % 3. Plot "Test Points" (Purple Points)
-
 h_test_point = []; 
 if ~isempty(V_violet)
     h_test_point = scatter(V_violet, I_violet, 40, 'm', 'filled', 'DisplayName', 'Point de test');
 end
 
 % 4. Plot "Intersections" (Black Points)
-
 h_intersection = []; 
 if ~isempty(V_noir) && ~isempty(I_noir)
     h_intersection = scatter(V_noir, I_noir, 70, 'ks', 'filled', 'DisplayName', 'Intersection');
@@ -299,12 +328,13 @@ xlabel('Tension (V)', 'FontSize', 30);
 ylabel('Courant (A)', 'FontSize', 30);
 
 % Axis limits to match the provided figure
-xlim([0 24]);
+xlim([0 40]);
 ylim([0 1.1 * max(I_violet)]);
 
 % Font configurations for axis ticks
 set(gca, 'FontSize', 30); 
 grid off;
+
 % Create the legend and adjust position and font
 legend_handles = [h_model];
 legend_labels = {'Modèle I-V'};
@@ -316,6 +346,7 @@ if ~isempty(h_intersection) && ishandle(h_intersection)
     legend_handles = [legend_handles, h_intersection];
     legend_labels = [legend_labels, 'Intersection'];
 end
+
 leg = legend(legend_handles, legend_labels, 'Location', 'NorthWest', 'FontSize', 20);
 set(leg, 'Box', 'on'); 
 set(findall(gcf, '-property', 'FontName'), 'FontName', 'Times New Roman');
@@ -326,17 +357,13 @@ hold off;
 
 function F = residuals_2_20(x, Voc, Isc, Vmp, Imp, q, k, Tref)
     Iph = x(1); Is0 = x(2); A = x(3); Rs = x(4); Rp = x(5);
-
     C   = q/(A*k*Tref);
-
     cap = 700;
     a_sc = min(C*Rs*Isc, cap);
     a_oc = min(C*Voc, cap);
     a_mp = min(C*(Rs*Imp+Vmp), cap);
-    a_eq5 = min(C*Is0, cap); 
-
+    a_eq5 = min(C*Isc, cap); 
     F = zeros(5,1);
-
     F(1) = Isc - ( Iph - Is0*(exp(a_sc)-1) - (Rs*Isc)/Rp );
     F(2) = 0   - ( Iph - Is0*(exp(a_oc)-1) - (Voc)/Rp );
     F(3) = Imp - ( Iph - Is0*(exp(a_mp)-1) - (Rs*Imp+Vmp)/Rp );
@@ -346,7 +373,7 @@ function F = residuals_2_20(x, Voc, Isc, Vmp, Imp, q, k, Tref)
 end
 
 function I = solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, ...
-    q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2) 
+    q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2, ns) 
     
     % 1. Photocurrent (Iph) 
     Iph = Iph_ref * (S / Sref) * (1 + alpha * (T - Tref));
@@ -360,7 +387,7 @@ function I = solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, ...
     temp_diff = (1 / Tref) - (1 / T);
     
     % 2c. Calculation of the exponent 
-    exponent_term = (q / (A * k)) * Eg_T_eV * temp_diff; 
+    exponent_term = (ns*q / (A * k)) * Eg_T_eV * temp_diff; 
     
     % 2d. Final calculation of Is(T)
     Is = Is0_ref * (T / Tref)^3 * exp(exponent_term);
