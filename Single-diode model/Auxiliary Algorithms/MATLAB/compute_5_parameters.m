@@ -3,7 +3,6 @@ clc; clear; close all; format long
 %% Module Parameters
 
 ns      = 60;       % number of series cells
-np      = 1;        % number of parallel branches
 
 Vmp_mod_ref  = 30.1;     % voltage at maximum power point (V)
 Imp_mod_ref  = 8.30;     % current at maximum power point (A)

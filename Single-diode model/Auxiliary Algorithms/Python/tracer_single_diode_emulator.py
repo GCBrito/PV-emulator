@@ -5,14 +5,16 @@ from scipy.optimize import fsolve
 plt.close('all')
 
 ## Module Parameters
-ns      = 60       # number of series cells
-np_param = 1        # number of parallel branches
+ns      = 60       # number of cells in series
+
 Vmp_mod_ref  = 30.1     # voltage at maximum power point (V)
 Imp_mod_ref  = 8.30     # current at maximum power point (A)
 Voc_mod_ref  = 37.2     # open-circuit voltage (V)
 Isc_mod_ref  = 8.87     # short-circuit current (A)
+
 Tref = 25 + 273.15 # Reference temperature (K)
 Sref = 1000 # Reference irradiance (W/m²)
+
 alpha   = 0.00065  # temperature coefficient of Isc (%/K)
 beta = -0.0037 # temperature coefficient of Voc (%/K)
 

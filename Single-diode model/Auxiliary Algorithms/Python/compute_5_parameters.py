@@ -57,8 +57,7 @@ def solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, q, k, S, Sref, alpha, T, Tref
 
 ## Module Parameters
 
-ns      = 60       # number of series cells
-np_branch = 1      # number of parallel branches
+ns      = 60       # number cells in series
 
 Vmp_mod_ref  = 30.1     # voltage at maximum power point (V)
 Imp_mod_ref  = 8.30     # current at maximum power point (A)
