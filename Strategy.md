@@ -11,7 +11,7 @@ The PV emulator proposed in this repository relies heavily on the understanding 
 As previously explained, the electrical behavior of a photovoltaic (PV) panel is generally represented by its I-V curve, which can be illustrated in the next figure:
 
 <p align="center">
-<img width="800" height="500" alt="Courbe caractéristique" src="https://github.com/user-attachments/assets/67c87c0e-fbee-4427-a6e2-9b1c867d8de6" />
+<img width="500" height="350" alt="image" src="https://github.com/user-attachments/assets/325602d3-1189-4b32-a344-fd1664ef48dd" />
 </p>
 
 In this figure, four key parameters can be identified:
@@ -57,42 +57,42 @@ The algorithm was developed in a **PlatformIO** environment within **Visual Stud
 The detailed operation of the **Emulator Mode** is illustrated by the following flowchart, which highlights the main tasks performed by the algorithm. It is important to note that the execution period of these tasks is fixed at **500 µs**.
 
 <p align="center">
-<img width="300" height="800" alt="Algorigrame" src="https://github.com/user-attachments/assets/71ec4446-cb0c-4c0c-ab82-129461845094" />
+<img width="300" height="800" alt="Flowchart" src="https://github.com/user-attachments/assets/5981152c-4af9-4a52-b3f1-e8d0abc3064a" />
 </p>
 
 The nomenclature used in the flowchart is presented below:
 
-- _**V<sub>s0</sub> , I<sub>s0</sub>**_ - Initial voltage and current test-point, used for calculating the load line.
-- _**V<sub>s</sub> , I<sub>s</sub>**_ - Output voltage and current, measured across the load by the TWIST sensors.    
+- _**V<sub>out,0</sub> , I<sub>out,0</sub>**_ - Initial voltage and current test-point, used for calculating the load line.
+- _**V<sub>out</sub> , I<sub>out</sub>**_ - Output voltage and current, measured across the load by the TWIST sensors.    
 - _**R**_ - Load resistance, calculated from V<sub>s</sub> and I<sub>s</sub>.  
-- _**V<sub>s</sub>*</sup>**_ , _**I<sub>s</sub>*</sup>**_ - Voltage and current corresponding to the operating point on the I–V characteristic of the emulated PV module.
+- _**V<sub>out</sub>*</sup>**_ , _**I<sub>out</sub>*</sup>**_ - Voltage and current corresponding to the operating point on the I–V characteristic of the emulated PV module.
 - _**α**_ - Duty cycle, control variable used for tuning the output voltage.  
 
-As illustrated by the flowchart, once the user activates the **Emulator Mode** — and assuming a load _R<sub>1</sub>_ connected to the emulator terminals — the duty cycle _α_ is adjusted so that the output voltage _V<sub>s</sub>_ reaches the reference value _V<sub>s0</sub>_, establishing an operating point referred to as the **test point**.  The goal is to used the sensors of the TWIST board are used to measure the voltage _V<sub>s0</sub>_ and the current _I<sub>s0</sub>_ imposed on the load at the test point.
+As illustrated by the flowchart, once the user activates the **Emulator Mode** — and assuming a load _R<sub>1</sub>_ connected to the emulator terminals — the duty cycle _α_ is adjusted so that the output voltage _V<sub>out</sub>_ reaches the reference value _V<sub>out,0</sub>_, establishing an operating point referred to as the **test point**.  The goal is to used the sensors of the TWIST board are used to measure the voltage _V<sub>out,0</sub>_ and the current _I<sub>out,0</sub>_ imposed on the load at the test point.
 
-To reduce oscillations caused by noise and ripple, the algorithm records the sensor data from the board for a duration of 500 µs, and then computes their time-averaged values. This process provides more reliable estimates of _V<sub>s</sub>_ and _I<sub>s</sub>_.  
+To reduce oscillations caused by noise and ripple, the algorithm records the sensor data from the board for a duration of 500 µs, and then computes their time-averaged values. This process provides more reliable estimates of _V<sub>out</sub>_ and _I<sub>out</sub>_.  
 
-After two successive averaged values of the current _I<sub>s</sub>_ are obtained (i.e., after two full iterations of the previous step), the program enters a **waiting loop**. This loop continues until the relative error between the two most recent _I<sub>s</sub>_ measurements is less than **10%**. This condition ensures that steady-state operation has been reached.  
+After two successive averaged values of the current _I<sub>out</sub>_ are obtained (i.e., after two full iterations of the previous step), the program enters a **waiting loop**. This loop continues until the relative error between the two most recent _I<sub>out</sub>_ measurements is less than **10%**. This condition ensures that steady-state operation has been reached.  
 
-Once this condition is satisfied, the most recent measured values of _V<sub>s</sub>_ and _I<sub>s</sub>_ (ideally equal to _V<sub>s0</sub>_ and _I<sub>s0</sub>_) are used to compute the equivalent load resistance _R<sub>1</sub>_, which is initially unknown. Graphically, this resistance corresponds to the **slope of the load line** that passes through the origin of the I–V plane and the test point measured at _V<sub>s</sub> = V<sub>s0</sub>_.
+Once this condition is satisfied, the most recent measured values of _V<sub>out</sub>_ and _I<sub>out</sub>_ (ideally equal to _V<sub>out,0</sub>_ and _I<sub>out,0</sub>_) are used to compute the equivalent load resistance _R<sub>1</sub>_, which is initially unknown. Graphically, this resistance corresponds to the **slope of the load line** that passes through the origin of the I–V plane and the test point measured at _V<sub>out</sub> = V<sub>out,0</sub>_.
 
 The mathematical expression of this load line is:
 
 $$
-I_{s,1} = \frac{1}{R_{1}} \cdot V_{s,1}
+I_{out,1} = \frac{1}{R_{1}} \cdot V_{out,1}
 $$
 
-From the load line equation, the algorithm identifies the intersection point ( _V<sub>s,1</sub><sup>*</sup>_, _I<sub>s,1</sub><sup>*</sup>_ ) between this line and the linearly-approximated I–V characteristic of the studied PV module. This point corresponds to the voltage and current that would be imposed across the load _R<sub>1</sub>_ if it were connected to a real PV module.  
+From the load line equation, the algorithm identifies the intersection point ( _V<sub>out,1</sub><sup>*</sup>_, _I<sub>out,1</sub><sup>*</sup>_ ) between this line and the linearly-approximated I–V characteristic of the studied PV module. This point corresponds to the voltage and current that would be imposed across the load _R<sub>1</sub>_ if it were connected to a real PV module.  
 
-Once this point is determined, the voltage reference is updated, and the PID controller adjusts the duty cycle until _V<sub>s</sub>_ reaches the new target value _V<sub>s,1</sub><sup>*</sup>_ (closed loop).
+Once this point is determined, the voltage reference is updated, and the PID controller adjusts the duty cycle until _V<sub>s</sub>_ reaches the new target value _V<sub>out,1</sub><sup>*</sup>_ (closed loop).
 
-If, at a later stage, the load _R<sub>1</sub>_ connected to the system is replaced by a new load _R<sub>2</sub>_, the algorithm automatically adapts to this change.  This adaptability is ensured by a periodic task executed every 500 µs, during which a candidate resistance, _R<sub>candidate</sub>_, is estimated from the most recent measurements of _V<sub>s</sub>_ and _I<sub>s</sub>_. The relative error between _R<sub>candidate</sub>_ and the reference resistance _R<sub>1</sub><sup>*</sup>_ is then computed according to the following formula :
+If, at a later stage, the load _R<sub>1</sub>_ connected to the system is replaced by a new load _R<sub>2</sub>_, the algorithm automatically adapts to this change.  This adaptability is ensured by a periodic task executed every 500 µs, during which a candidate resistance, _R<sub>candidate</sub>_, is estimated from the most recent measurements of _V<sub>out</sub>_ and _I<sub>out</sub>_. The relative error between _R<sub>candidate</sub>_ and the reference resistance _R<sub>1</sub><sup>*</sup>_ is then computed according to the following formula :
 
 $$
 Error = \frac{|R_{2}-R_{1}^{\ast}|}{R_{1}^{\ast}}
 $$
 
-If the error calculated according to this equation exceeds **2%** for two consecutive cycles of the periodic task (i.e., a total of 1000 µs), the algorithm detects a load change and reinitializes the voltage reference to duty cycle to _V<sub>s0</sub>_, thereby **restarting** the adaptation process. It is important to note that this persistent error condition over two cycles prevents transient variations caused by noise or ripple from being mistaken for an actual load change.
+If the error calculated according to this equation exceeds **2%** for two consecutive cycles of the periodic task (i.e., a total of 1000 µs), the algorithm detects a load change and reinitializes the voltage reference to duty cycle to _V<sub>out,0</sub>_, thereby **restarting** the adaptation process. It is important to note that this persistent error condition over two cycles prevents transient variations caused by noise or ripple from being mistaken for an actual load change.
 
 To facilitate the understanding of the Emulator Mode logic, the following figure illustrates the operation of the emulator in the I–V plane:
 
@@ -102,10 +102,10 @@ To facilitate the understanding of the Emulator Mode logic, the following figure
 
 In this image, the numbered points represent the key steps of the Emulator Mode operation:
 
-1. The initial voltage reference _V<sub>s0</sub>_ is applied on the load, generating a load line passing through the origin.  
-2. The PID then adjusts the duty cycle ( _α<sub>1</sub><sup>*</sup>_ ) to reach the operating point ( _V<sub>s,1</sub>*</sup>_, _I<sub>s,1</sub><sup>*</sup>_ ) on the I–V curve.  
-3. When the load changes, the operating point shifts to point (3). Since _α<sub>1</sub><sup>*</sup>_ remains constant, the reference voltage _V<sub>s,1</sub><sup>*</sup>_ does not change; only the current varies in response to the new load.  
-4. If the relative error between the previous load and the candidate load exceeds 2% for two consecutive cycles, the system detects a load change and reinitializes the voltage reference to _V<sub>s0</sub>_ .  
+1. The initial voltage reference _V<sub>out,0</sub>_ is applied on the load, generating a load line passing through the origin.  
+2. The PID then adjusts the duty cycle ( _α<sub>1</sub><sup>*</sup>_ ) to reach the operating point ( _V<sub>out,1</sub>*</sup>_, _I<sub>out,1</sub><sup>*</sup>_ ) on the I–V curve.  
+3. When the load changes, the operating point shifts to point (3). Since _α<sub>1</sub><sup>*</sup>_ remains constant, the reference voltage _V<sub>out,1</sub><sup>*</sup>_ does not change; only the current varies in response to the new load.  
+4. If the relative error between the previous load and the candidate load exceeds 2% for two consecutive cycles, the system detects a load change and reinitializes the voltage reference to _V<sub>out,0</sub>_ .  
 5. The emulation process restart, allowing the system to operate again as a PV emulator.
 
 The section [**Tutorial**](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md) was organized to support the use of the developed emulator in a laboratory environment.
