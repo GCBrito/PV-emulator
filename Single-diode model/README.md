@@ -28,7 +28,7 @@ Where:
 - $V_{pv}$ — output voltage [V]
 - $A$ — diode ideality factor [–]
 - $k$ — Boltzmann constant = 1.3806503 × 10⁻²³ [J/K]
-- $n_s$ - Number of cells in series [–]
+- $n_s$ — Number of cells in series [–]
 - $q$ — elementary charge = 1.60217646 × 10⁻¹⁹ [C]
 - $E_{G0}$ — Bandgap energy at 0 K, equal to 1.166 eV for silicon cells [eV]
 - $k_1$ — Material-dependent coefficient, equal to 4.73 × 10⁻¹⁹ eV/K for silicon cells [eV/K]
