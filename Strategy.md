@@ -1,4 +1,4 @@
-The physical configuration of the PV emulator described here is illustrated in the following schematic, where **_V<sub>in</sub>_** denotes the input voltage imposed by the DC source, **_I<sub>in</sub>_** the input current drawn from the DC source, **_V<sub>s</sub>_** the output voltage imposed by the emulator on the load, and **_I<sub>s</sub>_** the output current supplied by the emulator to this same load:
+The physical configuration of the PV emulator described here is illustrated in the following schematic, where **_V<sub>in</sub>_** denotes the input voltage imposed by the DC source, **_I<sub>in</sub>_** the input current drawn from the DC source, **_V<sub>out</sub>_** the output voltage imposed by the emulator on the load, and **_I<sub>out</sub>_** the output current supplied by the emulator to this same load:
 
 <p align="center">
 <img width="500" height="400" alt="Emulator_parameters" src="https://github.com/user-attachments/assets/601a5e40-206e-4b3b-bcdc-aef52cd53dc9" />
@@ -18,8 +18,8 @@ In this figure, four key parameters can be identified:
 
 - **_V<sub>oc</sub>_** - Open-circuit voltage  
 - **_I<sub>sc</sub>_** - Short-circuit current  
-- **_V<sub>MPP</sub>_** - Voltage at the maximum power point  
-- **_I<sub>MPP</sub>_** - Current at the maximum power point  
+- **_V<sub>mpp</sub>_** - Voltage at the maximum power point  
+- **_I<sub>mpp</sub>_** - Current at the maximum power point  
 
 These parameters mainly depend on the intrinsic properties of the PV cells. However, external factors such as **shading, temperature, and environmental conditions** can also affect the overall performance of the module. The **maximum power point (MPP)**, represented by the coordinates (_V<sub>MPP</sub>_, _I<sub>MPP</sub>_) in the I–V plane, corresponds to the operating point at which the **product of current and voltage is maximized**. 
 
@@ -97,7 +97,7 @@ If the error calculated according to this equation exceeds **2%** for two consec
 To facilitate the understanding of the Emulator Mode logic, the following figure illustrates the operation of the emulator in the I–V plane:
 
 <p align="center">
-<img width="500" height="1000" alt="Emulator_Working" src="https://github.com/user-attachments/assets/a981126c-f72d-4fa1-8829-520670ffce35" />
+<img width="500" height="1000" alt="Emulator_Working" src="https://github.com/user-attachments/assets/506dc0de-490d-4ad1-a723-992a6859d7c9" />
 </p>
 
 In this image, the numbered points represent the key steps of the Emulator Mode operation:
