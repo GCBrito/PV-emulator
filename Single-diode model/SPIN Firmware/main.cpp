@@ -70,8 +70,7 @@ void setup_routine();
 
 // --- PV MODULE REFERENCE PARAMETERS (32-bit float) ---
 // These define the panel to be modeled (e.g., CS6P-250P)
-const float32_t ns = 60; // Number of series cells
-const float32_t np = 1;  // Number of parallel branches
+const float32_t ns = 60; // Number of cells in series
 
 // Parameters at Standard Test Conditions (STC)
 const float32_t Vmp_mod_ref = 30.1f; // Voltage at max power (V)
@@ -120,7 +119,7 @@ const float32_t k2 = 636.0f;   // Coefficient k2 (K)
 // --- SOLVER CONSTANTS (64-bit double for high precision setup) ---
 const double SOLVER_q_d = 1.60217662e-19; 
 const double SOLVER_k_d = 1.38064852e-23; 
-// Cell-level parameters converted to double for the solver
+// Module-level parameters converted to double for the solver
 const double SOLVER_ISC_MOD_REF_d = (double)Isc_mod_ref;
 const double SOLVER_VOC_MOD_REF_d = (double)Voc_mod_ref;
 const double SOLVER_VMP_MOD_REF_d = (double)Vmp_mod_ref;
@@ -626,7 +625,7 @@ double solve_parameters_levenberg_marquardt(const Vector5 initial_x_scaled, Vect
 void solve_parameters() {
     // Initial guess (x0), in double
     Vector5 initial_x_scaled_d;
-    initial_x_scaled_d[0] = (double)Isc_mod_ref; // Iph_ref ~ Isc_cell_ref
+    initial_x_scaled_d[0] = (double)Isc_mod_ref; // Iph_ref ~ Is_mod_ref
     initial_x_scaled_d[1] = log10(1e-9);          // log10(Is0_ref)
     initial_x_scaled_d[2] = ns;                  // A (a common guess)
     initial_x_scaled_d[3] = log10(0.05);         // log10(Rs)
@@ -712,8 +711,8 @@ void computeVoltagePoints(float32_t V[N_POINTS]) {
  * * This function calculates the I-V curve at the *current*
  * operating conditions (S, T) using the 5 parameters found
  * by the solver. It uses a Newton-Raphson iterative solver.
- * * @param V The cell voltage (V_module).
- * @return float32_t The cell current (I_module).
+ * @param V The module voltage (V_module).
+ * @return float32_t The module current (I_module).
  */
 float32_t solve_I_V_final_model(float32_t V) {
     // 1. Calculate Photons Current (Iph) at current S, T
@@ -764,12 +763,12 @@ float32_t solve_I_V_final_model(float32_t V) {
     return I;
 }
 
-// Calculates the 11 current points corresponding to the 11 voltage points
+// Calculates the N_POINTS current points corresponding to the N_POINTS voltage points
 void computeCurrentPoints(float32_t I[N_POINTS], float32_t V[N_POINTS]) {
     for (int i = 0; i < N_POINTS; i++) {
-        float32_t V_cell = V[i]; 
-        float32_t I_cell = solve_I_V_final_model(V_cell); 
-        I[i] = I_cell * np; 
+        float32_t V_mod = V[i]; 
+        float32_t I_mod = solve_I_V_final_model(V_mod); 
+        I[i] = I_mod ; 
     }
 }
 
