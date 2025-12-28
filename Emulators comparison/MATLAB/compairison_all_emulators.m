@@ -938,14 +938,14 @@ I_pannel = [
 
 h4 = plot(V_pannel, I_pannel, 'ko', ...      % plot real panel data
           'MarkerSize',6, 'MarkerFaceColor','k');
-xlabel('Tension (V)', 'FontSize', 30);
-ylabel('Courant (A)', 'FontSize', 30);
+xlabel('Voltage (V)', 'FontSize', 30);
+ylabel('Current (A)', 'FontSize', 30);
 
   xlim([0 24]); 
   ylim([0 3]); 
 
 legend([h1 h2 h3 h4], ...
-       {'Émulateur open-source modèle à une diode', 'Émulateur open-source modèle exp. simplifié', 'Émulateur commercial', 'Données des panneaux réels'}, ...
+       {'Open-source PV Emulator – Single Diode Model', 'Open-source PV Emulator – Simplified Exp. Model', 'Commercial PV emulator', 'Real PV panel data'}, ...
        'Location','best');
 % Font settings for axis ticks
 set(gca, 'FontSize', 30); % Adjusted font size based on your image

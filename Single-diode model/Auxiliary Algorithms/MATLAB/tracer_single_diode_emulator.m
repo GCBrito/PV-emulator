@@ -305,15 +305,14 @@ for r_val = Rs_to_plot'
 end
 
 % 2. Plot the I-V Model (P-V Curve)
-% Ajustado para usar o Voc_op (calculado) como limite, não o Voc de referência
 V_plot = linspace(0, max(points_V), 500); 
 I_plot = modele_pv(V_plot);
-h_model = plot(V_plot, I_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Modèle I-V');
+h_model = plot(V_plot, I_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'I-V model');
 
 % 3. Plot "Test Points" (Purple Points)
 h_test_point = []; 
 if ~isempty(V_violet)
-    h_test_point = scatter(V_violet, I_violet, 40, 'm', 'filled', 'DisplayName', 'Point de test');
+    h_test_point = scatter(V_violet, I_violet, 40, 'm', 'filled', 'DisplayName', 'Test point');
 end
 
 % 4. Plot "Intersections" (Black Points)
@@ -324,8 +323,8 @@ end
 
 %% Plot Configurations
 
-xlabel('Tension (V)', 'FontSize', 30); 
-ylabel('Courant (A)', 'FontSize', 30);
+xlabel('Voltage (V)', 'FontSize', 30); 
+ylabel('Current(A)', 'FontSize', 30);
 
 % Axis limits to match the provided figure
 xlim([0 40]);
@@ -337,10 +336,10 @@ grid off;
 
 % Create the legend and adjust position and font
 legend_handles = [h_model];
-legend_labels = {'Modèle I-V'};
+legend_labels = {'I-V model'};
 if ~isempty(h_test_point) && ishandle(h_test_point)
     legend_handles = [legend_handles, h_test_point];
-    legend_labels = [legend_labels, 'Point de test'];
+    legend_labels = [legend_labels, 'Test point'];
 end
 if ~isempty(h_intersection) && ishandle(h_intersection)
     legend_handles = [legend_handles, h_intersection];

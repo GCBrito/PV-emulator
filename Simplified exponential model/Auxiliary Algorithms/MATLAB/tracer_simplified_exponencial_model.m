@@ -149,17 +149,17 @@ for r_val = Rs_to_plot'
         plot(V_line_range, I_line, '--', 'LineWidth', 0.8, 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
     end
 end
-h_load_line_legend = plot(NaN, NaN, '--', 'Color', [0.5 0.5 0.5], 'DisplayName', 'Droite de charge');
+h_load_line_legend = plot(NaN, NaN, '--', 'Color', [0.5 0.5 0.5], 'DisplayName', 'Load line');
 
 % 2. Plot the I-V Model (PV Curve)
 V_plot = linspace(0, Voc, 500);
 I_plot = pv_model(V_plot);
-h_model = plot(V_plot, I_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Modèle I-V');
+h_model = plot(V_plot, I_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'I-V model');
 
 % 3. Plot "Test Points" (Magenta Points)s
 h_test_point = []; 
 if ~isempty(V_magenta)
-    h_test_point = scatter(V_magenta, I_magenta, 40, 'm', 'filled', 'DisplayName', 'Point de test');
+    h_test_point = scatter(V_magenta, I_magenta, 40, 'm', 'filled', 'DisplayName', 'Test point');
 end
 
 % 4. Plot "Intersections" (Black Points)
@@ -170,8 +170,8 @@ end
 
 %% Plot Configurations
 
-xlabel('Tension (V)', 'FontSize', 30); 
-ylabel('Courant (A)', 'FontSize', 30); 
+xlabel('Voltage (V)', 'FontSize', 30); 
+ylabel('Current (A)', 'FontSize', 30); 
 
 % Axis limits
 xlim([0 1.2 * Voc]); 
@@ -180,15 +180,15 @@ set(gca, 'FontSize', 30);
 grid off;
 
 legend_handles = [h_model];
-legend_labels = {'Modèle I-V'};
+legend_labels = {'I-V model'};
 
 if exist('h_load_line_legend', 'var') && ishandle(h_load_line_legend)
     legend_handles = [legend_handles, h_load_line_legend];
-    legend_labels = [legend_labels, 'Droite de charge'];
+    legend_labels = [legend_labels, 'Load line'];
 end
 if ~isempty(h_test_point) && ishandle(h_test_point)
     legend_handles = [legend_handles, h_test_point];
-    legend_labels = [legend_labels, 'Point de test'];
+    legend_labels = [legend_labels, 'Test point'];
 end
 if ~isempty(h_intersection) && ishandle(h_intersection)
     legend_handles = [legend_handles, h_intersection];
