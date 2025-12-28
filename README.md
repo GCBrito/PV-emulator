@@ -15,6 +15,7 @@ The following reading order is recommended for readers who are not yet familiar 
 5) [**Tutorial**](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md) — provides instructions on how to use the emulator.
 6) [**Simplified exponential model README (optional)**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) — describes the simplified exponencial model for PV modules and how it is implemented in the emulator.
 7) [**Basics of Power Electronics (optional)**](https://github.com/GCBrito/PV-emulator/blob/main/Basics%20of%20Power%20Electronics.md) — presents a classical Buck converter analysis aimed at readers who are not yet familiar with power electronics.
+8) [**Extras (optional)**](https://github.com/GCBrito/PV-emulator/tree/main/Extras) — Presents all articles and lectures related to the PV emulator.
 
 # _PV Emulator_
 
