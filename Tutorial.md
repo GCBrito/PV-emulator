@@ -7,7 +7,7 @@ To carry out the laboratory experiments, the setup shown in the following figure
 
 It consists of the following elements:
 
-- A DC power supply ($V_in$).  
+- A DC power supply ($V_{in}$).  
 - The **OwnTech** board, running the Emulator's algorithm.  
 - A variable resistive load.  
 - An ammeter to measure the output current ($I_{out}$).  
@@ -16,7 +16,7 @@ It consists of the following elements:
 In practice, to reproduce the configuration shown in the schematic above, the components must be wired as shown in the following diagram:
 
 <p align="center">
-<img width="12842" height="3871" alt="Wiring" src="https://github.com/user-attachments/assets/1070ef54-269a-4098-aad3-3bb06e2f69b2" />
+<img width="12842" height="3871" alt="Wiring - Cours" src="https://github.com/user-attachments/assets/20073ada-cfe6-4a4c-a751-23d131767979" />
 </p>
 
 # _First steps_
