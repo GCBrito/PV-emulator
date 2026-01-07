@@ -772,7 +772,7 @@ void computeCurrentPoints(float32_t I[N_POINTS], float32_t V[N_POINTS]) {
     }
 }
 
-// Calculates the (a, b) coefficients for the 10 linear segments
+// Calculates the (a, b) coefficients for the linear segments
 void computeSegments(struct Segment segments[N_POINTS - 1], float32_t V[N_POINTS], float32_t I[N_POINTS]) {
     for (int i = 0; i < N_POINTS - 1; i++) {
         float32_t deltaV = V[i + 1] - V[i];
