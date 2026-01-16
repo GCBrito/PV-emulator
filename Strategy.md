@@ -68,7 +68,7 @@ The nomenclature used in the flowchart is presented below:
 - _**V<sub>out</sub>*</sup>**_ , _**I<sub>out</sub>*</sup>**_ - Voltage and current corresponding to the operating point on the I–V characteristic of the emulated PV module.
 - _**α**_ - Duty cycle, control variable used for tuning the output voltage.  
 
-As illustrated by the flowchart, once the user activates the **Emulator Mode** — and assuming a load _R<sub>1</sub>_ connected to the emulator terminals — the duty cycle _α_ is adjusted so that the output voltage _V<sub>out</sub>_ reaches the reference value _V<sub>out,0</sub>_, establishing an operating point referred to as the **test point**.  The goal is to used the sensors of the TWIST board are used to measure the voltage _V<sub>out,0</sub>_ and the current _I<sub>out,0</sub>_ imposed on the load at the test point.
+As illustrated by the flowchart, once the user activates the **Emulator Mode** — and assuming a load _R<sub>1</sub>_ connected to the emulator terminals — the duty cycle _α_ is adjusted so that the output voltage _V<sub>out</sub>_ reaches the reference value _V<sub>out,0</sub>_, establishing an operating point referred to as the **test point**.  The TWIST board are used to measure the voltage _V<sub>out,0</sub>_ and the current _I<sub>out,0</sub>_ imposed on the load at the test point.
 
 To reduce oscillations caused by noise and ripple, the algorithm records the sensor data from the board for a duration of 500 µs, and then computes their time-averaged values. This process provides more reliable estimates of _V<sub>out</sub>_ and _I<sub>out</sub>_.  
 
@@ -84,7 +84,7 @@ $$
 
 From the load line equation, the algorithm identifies the intersection point ( _V<sub>out,1</sub><sup>*</sup>_, _I<sub>out,1</sub><sup>*</sup>_ ) between this line and the linearly-approximated I–V characteristic of the studied PV module. This point corresponds to the voltage and current that would be imposed across the load _R<sub>1</sub>_ if it were connected to a real PV module.  
 
-Once this point is determined, the voltage reference is updated, and the PID controller adjusts the duty cycle until _V<sub>s</sub>_ reaches the new target value _V<sub>out,1</sub><sup>*</sup>_ (closed loop).
+Once this point is determined, the voltage reference is updated, and the PID controller adjusts the duty cycle until _V<sub>out</sub>_ reaches the new target value _V<sub>out,1</sub><sup>*</sup>_ (closed loop).
 
 If, at a later stage, the load _R<sub>1</sub>_ connected to the system is replaced by a new load _R<sub>2</sub>_, the algorithm automatically adapts to this change.  This adaptability is ensured by a periodic task executed every 500 µs, during which a candidate resistance, _R<sub>candidate</sub>_, is estimated from the most recent measurements of _V<sub>out</sub>_ and _I<sub>out</sub>_. The relative error between _R<sub>candidate</sub>_ and the reference resistance _R<sub>1</sub><sup>*</sup>_ is then computed according to the following formula :
 
