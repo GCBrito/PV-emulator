@@ -106,7 +106,7 @@ In this image, the numbered points represent the key steps of the Emulator Mode 
 2. The PID then adjusts the duty cycle ( _α<sub>1</sub><sup>*</sup>_ ) to reach the operating point ( _V<sub>out,1</sub>*</sup>_, _I<sub>out,1</sub><sup>*</sup>_ ) on the I–V curve.  
 3. When the load changes, the operating point shifts to point (3). Since _α<sub>1</sub><sup>*</sup>_ remains constant, the reference voltage _V<sub>out,1</sub><sup>*</sup>_ does not change; only the current varies in response to the new load.  
 4. If the relative error between the previous load and the candidate load exceeds 2% for two consecutive cycles, the system detects a load change and reinitializes the voltage reference to _V<sub>out,0</sub>_ .  
-5. The emulation process restart, allowing the system to operate again as a PV emulator.
+5. The emulation process restarts, allowing the system to operate again as a PV emulator.
 
 The section [**Tutorial**](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md) was organized to support the use of the developed emulator in a laboratory environment.
 
