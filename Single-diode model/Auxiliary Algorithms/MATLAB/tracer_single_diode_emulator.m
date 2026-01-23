@@ -33,7 +33,7 @@ k2   = 636;              % Coefficient k2 (K)
 Rs_0 = (Voc_mod_ref - Vmp_mod_ref)/Imp_mod_ref;
 Rp_0 = (Vmp_mod_ref)/(Isc_mod_ref - Imp_mod_ref);
 
-x0 = [Isc_mod_ref; log10(1e-9); ns; log10(Rs_0); Rp_0];
+x0 = [Isc_mod_ref; log10(1e-9); 0.5*ns; log10(Rs_0); Rp_0];
 opts = optimoptions('fsolve', ...
     'Display', 'off', 'TolFun', 1e-10, 'TolX', 1e-10, 'MaxIter', 1000, 'MaxFunctionEvaluations', 2000);
 fun = @(x) residuals_2_20(x, Voc_mod_ref, Isc_mod_ref, Vmp_mod_ref, Imp_mod_ref, q, k, Tref);
