@@ -13,8 +13,8 @@ beta = -0.0034; % temperature coefficient of Voc (%/K)
 T = 44.5 + 273.15; % Current temperature (K)
 G = 765; % Current irradiance (W/m²)
 
-Isc_estimation = (G/Gref)*Isc_mod_ref*(1+alpha*(T-Tref))
-Voc_estimation = Voc_mod_ref*(1+beta*(T-Tref))
+I_sc_estimation = (G/Gref)*Isc_mod_ref*(1+alpha*(T-Tref))
+V_oc_estimation = Voc_mod_ref*(1+beta*(T-Tref))
 
 %% 1) Display of the three curves + experimental points
 figure('Color','w','Position',[100 100 900 500]);
@@ -41,11 +41,10 @@ V_emulator = [
     32.716629;
     33.539886;
     34.182873;
-    Voc_estimation
 ];
 
 I_emulator = [
-    Isc_estimation;
+    I_sc_estimation;
     6.829757;
     6.817284;
     6.802004;
@@ -64,7 +63,7 @@ I_emulator = [
     2.389792;
     1.202061;
     0.274412;
-    0
+    
 ];
 
 
@@ -342,11 +341,11 @@ xlabel('Voltage (V)', 'FontSize', 30);
 ylabel('Current (A)', 'FontSize', 30); 
 
 % Axis limits to match the provided figure
-xlim([0 1.1*Voc_estimation]);
-ylim([0 1.1*Isc_estimation]);
+% xlim([0 36]);
+% ylim([0 5.5]);
 
 legend([h1 h2], ...
-       {'PV Emulator – Single Diode Model', 'Real PV Panel'}, ...
+       {'PV Emulator – Single Diode Model', 'Experimental Results – Real PV Panel'}, ...
        'Location','best');
 
 % Axis ticks font configuration

@@ -2,23 +2,23 @@ clc; clear; close all; format long
 
 %% Module Parameters
 
-ns = 72;       % number of series cells
+ns = 60;       % number of series cells
 
-Vmp_mod_ref = 17.4;     % voltage at maximum power point (V)
-Imp_mod_ref = 5.02;     % current at maximum power point (A)
-Voc_mod_ref = 21.7;     % open-circuit voltage (V)
-Isc_mod_ref = 5.34;     % short-circuit current (A)
+Vmp_mod_ref = 30.1;     % voltage at maximum power point (V)
+Imp_mod_ref = 8.30;     % current at maximum power point (A)
+Voc_mod_ref = 37.2;     % open-circuit voltage (V)
+Isc_mod_ref = 8.87;     % short-circuit current (A)
 
 Tref = 25 + 273.15; % Reference temperature (K)
-Sref = 1000; % Reference irradiance (W/m²)
+Gref = 1000; % Reference irradiance (W/m²)
 
-alpha   = 0.00040;  % temperature coefficient of Isc (%/K)
-beta = -0.0038; % temperature coefficient of Voc (%/K)
+alpha   = 0.00065;  % temperature coefficient of Isc (1/K or 1/ºC)
+beta = -0.0034; % temperature coefficient of Voc (1/K or 1/ºC)
 
 %% Operating Conditions
 
-T = 25 + 273.15; % Current temperature (K)
-S = 1000; % Current irradiance (W/m²)
+T = 44.5 + 273.15; % Current temperature (K)
+G = 765; % Current irradiance (W/m²)
 
 %% Physical Constants
 
@@ -98,7 +98,7 @@ V_mod = [V_mod; Voc_estimation];
 V_mod = unique(V_mod);
 
 I_mod = arrayfun(@(V) solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, ...
-    q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2, ns), V_mod);
+    q, k, G, Gref, alpha, T, Tref, E_G0, k1, k2, ns), V_mod);
 
 points_V = V_mod;
 points_I = I_mod;
@@ -144,28 +144,30 @@ mesures = [
     % ---------------------CS6P-250P---------------------
     
     % --- Sref = 1000, Tref = 25, S = 765, T = 44.5 ---
-    % 2.890855457	35.784859	12.165794	20.089266	6.829757;
-    % 3.030390738	35.786652	11.396839	21.406616	6.817284;
-    % 3.191642651	35.784744	10.764368	22.612379	6.802004;
-    % 3.379360465	35.78397	10.236521	23.688374	6.776401;
-    % 3.54862119	35.786598	9.671537	24.878904	6.723669;
-    % 3.739002933	35.785908	9.176556	25.916357	6.645714;
-    % 3.90922619	35.783024	8.804281	26.656096	6.558634;
-    % 4.1	35.787361	8.393621	27.416744	6.430365;
-    % 4.330218069	35.783806	7.966219	28.124405	6.261077;
-    % 4.560386473	35.786224	7.636677	28.616514	6.106682;
-    % 4.903878583	35.786362	7.083742	29.345022	5.808709;
-    % 5.399638336	35.785271	6.442036	30.058086	5.411033;
-    % 6.138832998	36.241776	5.862995	30.656363	4.959418;
-    % 6.928888889	35.78756	5.102286	31.281769	4.459889;
-    % 8.252604167	35.788845	4.317395	31.720699	3.826633;
-    % 13.49152542	35.790173	2.6143	32.716629	2.389792;
-    % 431.375	35.815018	0.287514	34.182873	0.274412;
+    35.784859	12.165794	20.089266	6.829757	2.94143203;
+    35.786652	11.396839	21.406616	6.817284	3.140050495;
+    35.784744	10.764368	22.612379	6.802004	3.324370142;
+    35.78397	10.236521	23.688374	6.776401	3.495716089;
+    35.786598	9.671537	24.878904	6.723669	3.700197615;
+    35.785908	9.176556	25.916357	6.645714	3.899709948;
+    35.783024	8.804281	26.656096	6.558634	4.064275579;
+    35.787361	8.393621	27.416744	6.430365	4.26363729;
+    35.783806	7.966219	28.124405	6.261077	4.491943638;
+    35.786224	7.636677	28.616514	6.106682	4.686098605;
+    35.786362	7.083742	29.345022	5.808709	5.051900861;
+    35.785271	6.442036	30.058086	5.411033	5.554962611;
+    36.241776	5.862995	30.656363	4.959418	6.181443669;
+    35.78756	5.102286	31.281769	4.459889	7.014024116;
+    35.788845	4.317395	31.720699	3.826633	8.289454202;
+    35.790173	2.6143	32.716629	2.389792	13.69015755;
+    35.804443	1.283223	33.539886	1.202061	27.90198334;
+    35.815018	0.287514	34.182873	0.274412	124.5677048;
+
 
     % ---------------- KC85TS - charge R ----------------- 
     
     % --- Sref = 1000, Tref = 25, S = 1000, T = 25 ---
-    2.274319066	22.960472	10.105235	12.117974	5.333295;
+    % 2.274319066	22.960472	10.105235	12.117974	5.333295;
 
 
     % --------------- KC85TS - charge R+L --------------- 
@@ -262,17 +264,16 @@ mesures = [
     ];
 
 if ~isempty(mesures)
-    R_data = mesures(:, 1);
-    V_violet = mesures(:, 2); % Purple Points (Test Point)
-    I_violet = mesures(:, 3); % Purple Points (Test Point)
-    V_noir = mesures(:, 4);   % Black Points (Intersection)
-    I_noir = mesures(:, 5);   % Black Points (Intersection)
+    V_violet = mesures(:, 1); % Purple Points (Test Point)
+    I_violet = mesures(:, 2); % Purple Points (Test Point)
+    V_noir = mesures(:, 3);   % Black Points (Intersection)
+    I_noir = mesures(:, 4);   % Black Points (Intersection)
+    R_data = mesures(:, 5);   % Black dotted-line
 else
-    R_data = []; V_violet = []; I_violet = []; V_noir = []; I_noir = [];
+    V_violet = []; I_violet = []; V_noir = []; I_noir = []; R_data = [];
 end
 
 %% Plotting (Figure Generation)
-
 figure; 
 hold on; 
 
@@ -281,21 +282,33 @@ if isempty(R_data)
     Rs_to_plot = [0.1, 0.5, 1:1:15, 20:5:50, 60:10:200, 300, 400, 500, 1000];
     Rs_to_plot = sort([Rs_to_plot, inf]);
 else
-    Rs_to_plot = R_data; % Use resistances from your data
+    Rs_to_plot = R_data; 
     Rs_to_plot = sort(unique(Rs_to_plot));
 end
 
 V_line = linspace(0, max(V_violet) * 1.25, 100);
+h_load = []; % Inicializa o handle para a legenda
 
-for r_val = Rs_to_plot'
-    if isinf(r_val) % Open circuit (I = 0)
-        plot(V_line, zeros(size(V_line)), 'k--', 'LineWidth', 0.8, 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
-    elseif r_val == 0 % Short circuit (V = 0)
-        plot(zeros(size(V_line)), linspace(0, max(I_violet) * 1.1, 100), 'k--', 'LineWidth', 0.8, 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
+for i = 1:length(Rs_to_plot)
+    r_val = Rs_to_plot(i);
+    
+    % Definimos HandleVisibility como 'on' apenas para a primeira linha para não poluir a legenda
+    if i == 1
+        vis = 'on';
+    else
+        vis = 'off';
+    end
+
+    if isinf(r_val) 
+        h_temp = plot(V_line, zeros(size(V_line)), 'k--', 'LineWidth', 0.8, 'Color', [0.5 0.5 0.5], 'HandleVisibility', vis);
+    elseif r_val == 0 
+        h_temp = plot(zeros(size(V_line)), linspace(0, max(I_violet) * 1.1, 100), 'k--', 'LineWidth', 0.8, 'Color', [0.5 0.5 0.5], 'HandleVisibility', vis);
     else
         I_line = V_line ./ r_val;
-        plot(V_line, I_line, 'k--', 'LineWidth', 0.8, 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
+        h_temp = plot(V_line, I_line, 'k--', 'LineWidth', 0.8, 'Color', [0.5 0.5 0.5], 'HandleVisibility', vis);
     end
+    
+    if i == 1, h_load = h_temp; end % Guarda o handle da primeira linha
 end
 
 % 2. Plot the I-V Model (P-V Curve)
@@ -316,28 +329,29 @@ if ~isempty(V_noir) && ~isempty(I_noir)
 end
 
 %% Plot Configurations
-
 xlabel('Voltage (V)', 'FontSize', 30); 
 ylabel('Current(A)', 'FontSize', 30);
-
-% Axis limits to match the provided figure
 xlim([0 1.2*Voc_estimation]);
 ylim([0 1.1 * max(I_violet)]);
-
-% Font configurations for axis ticks
 set(gca, 'FontSize', 30); 
 grid off;
 
-% Create the legend and adjust position and font
 legend_handles = [h_model];
-legend_labels = {'I-V model'};
+legend_labels = {'Theoretical I–V curve'};
+
+if ~isempty(h_load)
+    legend_handles = [legend_handles, h_load];
+    legend_labels = [legend_labels, 'Load line'];
+end
+
 if ~isempty(h_test_point) && ishandle(h_test_point)
     legend_handles = [legend_handles, h_test_point];
     legend_labels = [legend_labels, 'Test point'];
 end
+
 if ~isempty(h_intersection) && ishandle(h_intersection)
     legend_handles = [legend_handles, h_intersection];
-    legend_labels = [legend_labels, 'Intersection'];
+    legend_labels = [legend_labels, 'Emulation Points'];
 end
 
 leg = legend(legend_handles, legend_labels, 'Location', 'NorthWest', 'FontSize', 20);
