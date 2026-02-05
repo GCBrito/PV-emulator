@@ -17,7 +17,7 @@
  * 1. Setup-Time Solver (64-bit double):
  * - Runs once at startup (in setup_routine).
  * - Solves a complex 5-equation system using the Levenberg-Marquardt
- * algorithm to find the 5 parameters (Iph, Is0, A, Rs, Rp) of
+ * algorithm to find the 5 parameters (Iph, Is, A, Rs, Rp) of
  * the single-diode model.
  * - This calculation is done in 64-bit (double) for high precision.
  * * 2. Run-Time Emulator (32-bit float):
@@ -69,40 +69,40 @@ void loop_critical_task();
 void setup_routine(); 
 
 // --- PV MODULE REFERENCE PARAMETERS (32-bit float) ---
-// These define the panel to be modeled (e.g., CS6P-250P)
-const float32_t ns = 60; // Number of cells in series
+// These define the panel to be modeled 
+const float32_t ns = 72; // Number of cells in series
 
 // Parameters at Standard Test Conditions (STC)
-const float32_t Vmp_mod_ref = 30.1f; // Voltage at max power (V)
-const float32_t Imp_mod_ref = 8.30f; // Current at max power (A)
-const float32_t Voc_mod_ref = 37.2f; // Open-circuit voltage (V)
-const float32_t Isc_mod_ref = 8.87f; // Short-circuit current (A)
+const float32_t Vmp_mod_ref = 34.0f; // Voltage at max power (V)
+const float32_t Imp_mod_ref = 4.4f; // Current at max power (A)
+const float32_t Voc_mod_ref = 43.4f; // Open-circuit voltage (V)
+const float32_t Isc_mod_ref = 4.8f; // Short-circuit current (A)
 
-const float32_t Tref = 25.0f + 273.15f; // Reference Temperature (K)
-const float32_t Sref = 1000.0f; // Reference Irradiance (W/m^2)
+const float32_t T_ref = 25.0f + 273.15f; // Reference Temperature (K)
+const float32_t G_ref = 1000.0f; // Reference Irradiance (W/m^2)
 
-const float32_t alpha = 0.00065f; // Temperature coefficient of Isc (%/K)
-const float32_t beta  = -0.0037f; // Temperature coefficient of Voc (%/K)
+const float32_t alpha = 0.0006f; // Temperature coefficient of Isc (%/K)
+const float32_t beta  = -0.0036f; // Temperature coefficient of Voc (%/K)
 
 // --- CURRENT OPERATING CONDITIONS (32-bit float) ---
-static float32_t T = 44.5f + 273.15f; // Current module temperature (K)
-static float32_t S = 765.0f;          // Current irradiance (W/m^2)
+static float32_t T = 25.0f + 273.15f; // Current module temperature (K)
+static float32_t G = 1000.0f;          // Current irradiance (W/m^2)
 
 // Initial estimation of Voc under the new temperature (this value of Voc is simply an approximation)
-// Formula: Voc(T) = Voc_ref * (1 + beta * (T - Tref))
-static float32_t Voc_estimation = Voc_mod_ref * (1.0f + beta * (T - Tref));
+// Formula: Voc(T) = Voc_ref * (1 + beta * (T - T_ref))
+static float32_t Voc_estimation = Voc_mod_ref * (1.0f + beta * (T - T_ref));
 
 // Duty cycles and Voltage references
 float32_t dutyCycle = 0.0f; // Current PWM duty cycle
 static float32_t dutyCycleP = 0.8f; // Stored duty cycle for Power mode
 static float32_t voltageReferenceP = 0.8f * 50.0f; // Target voltage for Power mode
-static float32_t voltageReferenceE_test_point = 1.05*Voc_estimation; // Initial target for Emulator mode (the "Test Point")
+static float32_t voltageReferenceE_test_point = 1.05f*Voc_estimation; // Initial target for Emulator mode (the "Test Point")
 static float32_t voltageReferenceE = 0.0f; // Calculated target for Emulator mode (the "Intersection")
 
 // --- 5-PARAMETER MODEL (SINGLE DIODE MODEL) ---
 // These globals will be populated by the 64-bit solver at startup
 static float32_t Iph_ref = 0.0f; // Photocurrent (A) at STC
-static float32_t Is0_ref = 0.0f; // Diode saturation current (A) at STC
+static float32_t Is_ref = 0.0f; // Diode saturation current (A) at STC
 static float32_t A       = 0.0f; // Diode ideality factor
 static float32_t Rs      = 0.0f; // Series resistance (Ohms)
 static float32_t Rp      = 0.0f; // Parallel resistance (Ohms)
@@ -124,7 +124,7 @@ const double SOLVER_ISC_MOD_REF_d = (double)Isc_mod_ref;
 const double SOLVER_VOC_MOD_REF_d = (double)Voc_mod_ref;
 const double SOLVER_VMP_MOD_REF_d = (double)Vmp_mod_ref;
 const double SOLVER_IMP_MOD_REF_d = (double)Imp_mod_ref;
-const double SOLVER_TREF_K_d = (double)Tref;
+const double SOLVER_T_ref_K_d = (double)T_ref;
 
 // --- SOLVER NUMERICAL TOLERANCES (64-bit double) ---
 const double JACOBIAN_EPSILON_d = 1e-8; // Step size for finite difference
@@ -310,37 +310,38 @@ int invertMatrix_d(const Matrix5x5 A, Matrix5x5 A_inv, int n) {
 
 
 // Un-scales the 'x' vector from the solver into physical parameters
-// x_scaled is [Iph_ref, log10(Is0_ref), A, log10(Rs), Rp]
-void unscale_params_d(const Vector5 x_scaled, double *Iph_param, double *Is0_param, double *A_param, double *Rs_param, double *Rp_param) {
+// x_scaled is [Iph_ref, log10(Is_ref), A, log10(Rs), Rp]
+void unscale_params_d(const Vector5 x_scaled, double *Iph_param, double *Is_param, double *A_param, double *Rs_param, double *Rp_param) {
     *Iph_param = x_scaled[0];
     *A_param   = x_scaled[2];
     *Rp_param  = x_scaled[4];
 
     // Convert from log10 scale back to linear scale
     *Rs_param = pow(10.0, x_scaled[3]);
+    *Rp_param = pow(10.0, x_scaled[4]);
     
-    // Clamp log10(Is0) to a reasonable range and convert back
-    double clamped_log10_Is0 = fmax(-20.0, fmin(x_scaled[1], -6.0)); 
-    *Is0_param = pow(10.0, clamped_log10_Is0);
-    if (*Is0_param < 1e-25) *Is0_param = 1e-25; // Prevent underflow
+    // Clamp log10() to a reasonable range and convert back
+    double clamped_log10_Is = fmax(-20.0, fmin(x_scaled[1], -6.0)); 
+    *Is_param = pow(10.0, clamped_log10_Is);
+    if (*Is_param < 1e-25) *Is_param = 1e-25; // Prevent underflow
 }
 
 
 /**
  * @brief Calculates the residual vector F(x) for the 5-parameter model.
  * The goal of the solver is to find an 'x' that makes F(x) = [0,0,0,0,0].
- * * @param x_scaled The scaled parameter vector: [Iph, log10(Is0), A, log10(Rs), Rp]
+ * * @param x_scaled The scaled parameter vector: [Iph, log10(Is), A, log10(Rs), Rp]
  * @param F        The output residual vector (5x1).
  */
 void residuals_2_20_double(const Vector5 x_scaled, Vector5 F) {
-    double Iph_param, Is0_param, A_param, Rs_param, Rp_param;
-    unscale_params_d(x_scaled, &Iph_param, &Is0_param, &A_param, &Rs_param, &Rp_param);
+    double Iph_param, Is_param, A_param, Rs_param, Rp_param;
+    unscale_params_d(x_scaled, &Iph_param, &Is_param, &A_param, &Rs_param, &Rp_param);
 
     double A_safe = fmax(0.1, A_param);
     double Rp_safe = fmax(0.01, Rp_param);
 
     // --- Intermediate Terms ---
-    double C_denominator = A_safe * SOLVER_k_d * SOLVER_TREF_K_d;
+    double C_denominator = A_safe * SOLVER_k_d * SOLVER_T_ref_K_d;
     if (fabs(C_denominator) < 1e-35) C_denominator = 1e-35;
     double C = SOLVER_q_d / C_denominator; 
     double cap = 700.0; 
@@ -364,22 +365,22 @@ void residuals_2_20_double(const Vector5 x_scaled, Vector5 F) {
     // --- Residual Equations ---
 
     double term0_Rp = (Rs_param * SOLVER_ISC_MOD_REF_d) / Rp_safe;
-    F[0] = SOLVER_ISC_MOD_REF_d - (Iph_param - Is0_param * (exp_sc - 1.0) - term0_Rp);
+    F[0] = SOLVER_ISC_MOD_REF_d - (Iph_param - Is_param * (exp_sc - 1.0) - term0_Rp);
 
     double term1_Rp = (SOLVER_VOC_MOD_REF_d) / Rp_safe;
-    F[1] = 0 - (Iph_param - Is0_param * (exp_oc - 1.0) - term1_Rp);
+    F[1] = 0 - (Iph_param - Is_param * (exp_oc - 1.0) - term1_Rp);
 
     double term2_Rp = (Rs_param * SOLVER_IMP_MOD_REF_d + SOLVER_VMP_MOD_REF_d) / Rp_safe;
-    F[2] = SOLVER_IMP_MOD_REF_d - (Iph_param - Is0_param * (exp_mp - 1.0) - term2_Rp);
+    F[2] = SOLVER_IMP_MOD_REF_d - (Iph_param - Is_param * (exp_mp - 1.0) - term2_Rp);
 
-    double term4_coeff = (SOLVER_q_d * Is0_param * Rp_safe * (Rs_param - Rp_safe)) / C_denominator; 
+    double term4_coeff = (SOLVER_q_d * Is_param * Rp_safe * (Rs_param - Rp_safe)) / C_denominator; 
     F[3] = Rs_param + term4_coeff * exp_eq5; 
 
     double term5_bracket_coeff = 1.0 + C * (SOLVER_VMP_MOD_REF_d - Rs_param * SOLVER_IMP_MOD_REF_d); 
     double term5_inside_bracket = term5_bracket_coeff * exp_mp; 
     double term5_Rp = (2.0 * SOLVER_VMP_MOD_REF_d) / Rp_safe;
     
-    F[4] = Iph_param - term5_Rp + Is0_param - Is0_param * term5_inside_bracket;
+    F[4] = Iph_param - term5_Rp + Is_param - Is_param * term5_inside_bracket;
 
     for (int i = 0; i < 5; ++i) {
         if (!is_finite_double(F[i])) {
@@ -414,7 +415,7 @@ void compute_jacobian_double(const Vector5 x_scaled, Matrix5x5 J) {
 
         // Calculate step size 'h'
         double h = JACOBIAN_EPSILON_d * (fabs(x_temp[j]) > 1.0 ? fabs(x_temp[j]) : 1.0);
-        if (j == 1 || j == 3) { // Special handling for log-scaled parameters
+        if (j == 1 || j == 3 || j == 4) { // Special handling for log-scaled parameters
              h = JACOBIAN_EPSILON_d; 
         }
         
@@ -463,9 +464,9 @@ double solve_parameters_levenberg_marquardt(const Vector5 initial_x_scaled, Vect
     const int n_params = 5;
     const double max_lambda = 1e10; 
 
-    // Bounds for scaled parameters: [Iph_ref, log10(Is0_ref), A, log10(Rs), Rp]
-    const double lower_bounds_scaled[5] = {0.8 * SOLVER_ISC_MOD_REF_d, -25.0, 0.8*ns, log10(1e-4), 10.0};
-    const double upper_bounds_scaled[5] = {1.2 * SOLVER_ISC_MOD_REF_d, -5.0, 2.5*ns, log10(10), 100000.0};
+    // Bounds for scaled parameters: [Iph_ref, log10(Is_ref), A, log10(Rs), Rp]
+    const double lower_bounds_scaled[5] = {0.5 * SOLVER_ISC_MOD_REF_d, -25.0, 0.1*ns, log10(1e-4), log10(10.0)};
+    const double upper_bounds_scaled[5] = {1.5 * SOLVER_ISC_MOD_REF_d, -5.0, 3.0*ns, log10(10), log10(100000.0)};
 
     for (int iter = 0; iter < max_iterations; ++iter) {
         // 1. Calculate Residuals F(x)
@@ -620,16 +621,20 @@ double solve_parameters_levenberg_marquardt(const Vector5 initial_x_scaled, Vect
  *
  * This sets up the initial guess (x0) and calls the
  * Levenberg-Marquardt solver. On success, it populates the
- * global 32-bit float parameters (Iph_ref, Is0_ref, etc.).
+ * global 32-bit float parameters (Iph_ref, Is_ref, etc.).
  */
 void solve_parameters() {
+  
+    float32_t Rs_0 = (Voc_mod_ref - Vmp_mod_ref)/(Imp_mod_ref); // Initial value of Rs
+    float32_t Rp_0 = (Vmp_mod_ref)/(Isc_mod_ref - Imp_mod_ref); // Initial value of Rp
+
     // Initial guess (x0), in double
     Vector5 initial_x_scaled_d;
-    initial_x_scaled_d[0] = (double)Isc_mod_ref; // Iph_ref ~ Is_mod_ref
-    initial_x_scaled_d[1] = log10(1e-9);          // log10(Is0_ref)
-    initial_x_scaled_d[2] = ns;                  // A (a common guess)
-    initial_x_scaled_d[3] = log10(0.05);         // log10(Rs)
-    initial_x_scaled_d[4] = 500.0;                // Rp
+    initial_x_scaled_d[0] = (double)Isc_mod_ref; // Iph_ref_0 ~ Is_mod_ref
+    initial_x_scaled_d[1] = log10(1e-9);          //log10(Is_ref_0)
+    initial_x_scaled_d[2] = 0.5*ns;                  // A 
+    initial_x_scaled_d[3] = log10(Rs_0);         // log10(Rs_0)
+    initial_x_scaled_d[4] = log10(Rp_0);                // Rp_0
 
     printk("Starting 5-parameter model calculation (double-precision).\n");
 
@@ -643,13 +648,13 @@ void solve_parameters() {
     }
 
     // On success, unscale the parameters
-    double final_Iph_ref, final_Is0_ref, final_A, final_Rs, final_Rp;
-    unscale_params_d(best_params_scaled, &final_Iph_ref, &final_Is0_ref, &final_A, &final_Rs, &final_Rp);
+    double final_Iph_ref, final_Is_ref, final_A, final_Rs, final_Rp;
+    unscale_params_d(best_params_scaled, &final_Iph_ref, &final_Is_ref, &final_A, &final_Rs, &final_Rp);
 
     printk(">>> Updating global parameters from double-precision solver results.\n");
     // Cast the 64-bit (double) results to 32-bit (float) for runtime use
     Iph_ref = (float32_t)final_Iph_ref;
-    Is0_ref = (float32_t)final_Is0_ref;
+    Is_ref = (float32_t)final_Is_ref;
     A = (float32_t)final_A;
     Rs = (float32_t)final_Rs;
     Rp = (float32_t)final_Rp;
@@ -709,25 +714,24 @@ void computeVoltagePoints(float32_t V[N_POINTS]) {
 /**
  * @brief Solves the single-diode model equation for I, given V.
  * * This function calculates the I-V curve at the *current*
- * operating conditions (S, T) using the 5 parameters found
+ * operating conditions (G, T) using the 5 parameters found
  * by the solver. It uses a Newton-Raphson iterative solver.
  * @param V The module voltage (V_module).
  * @return float32_t The module current (I_module).
  */
 float32_t solve_I_V_final_model(float32_t V) {
-    // 1. Calculate Photons Current (Iph) at current S, T
-    float32_t Iph = Iph_ref * (S / Sref) * (1.0f + alpha * (T - Tref));
-
+    // 1. Calculate Photons Current (Iph) at current G, T
+    float32_t Iph = Iph_ref * (G / G_ref) * (1.0f + alpha * (T - T_ref));
     // 2. Calculate Saturation Current (Is) at current T
     float32_t Eg_T_eV = E_G0 - (k1 * T * T) / (T + k2);
-    float32_t temp_diff = (1.0f / Tref) - (1.0f / T);
+    float32_t temp_diff = (1.0f / T_ref) - (1.0f / T);
     float32_t exponent_term = (ns*q / (A * k)) * Eg_T_eV * temp_diff;
 
     if (!isfinite(exponent_term)) {
         exponent_term = 0.0f;
     }
 
-    float32_t Is = Is0_ref * powf(T / Tref, 3.0f) * expf(exponent_term);
+    float32_t Is = Is_ref * powf(T / T_ref, 3.0f) * expf(exponent_term);
 
     // 3. Iterative Newton-Raphson solver for I
     // Equation: f(I) = Iph - Is*(exp(q*(V+I*Rs)/(A*k*T)) - 1) - (V+I*Rs)/Rp - I = 0
@@ -841,19 +845,19 @@ void setup_routine() {
 
     // 2. Configure sensors
     shield.sensors.enableDefaultTwistSensors();
-    shield.sensors.setConversionParametersLinear(I1_LOW, 0.0056f, -11.537f);
-    shield.sensors.setConversionParametersLinear(V1_LOW, 0.0456f, -92.69f);
-    shield.sensors.setConversionParametersLinear(I2_LOW, 0.0046f, -9.3977f);
-    shield.sensors.setConversionParametersLinear(V2_LOW, 0.0453f, -92.061f);
-    shield.sensors.setConversionParametersLinear(I_HIGH, 0.0046f, -9.1739f);
-    shield.sensors.setConversionParametersLinear(V_HIGH, 0.0299f, 0.2921f);
+    shield.sensors.setConversionParametersLinear(I1_LOW, 0.0055f, -11.498f);
+    shield.sensors.setConversionParametersLinear(V1_LOW, 0.0438f, -88.21f);
+    shield.sensors.setConversionParametersLinear(I2_LOW, 0.0056f, -11.556f);
+    shield.sensors.setConversionParametersLinear(V2_LOW, 0.0448f, -90.72f);
+    shield.sensors.setConversionParametersLinear(I_HIGH, 0.005f, -10.203f);
+    shield.sensors.setConversionParametersLinear(V_HIGH, 0.0301f, -0.1723f);
 
     // 3. Initialize PID controller
     pid.init(pidParams);
 
     // 4. *** RUN THE 64-BIT SOLVER ***
     // This is the most critical part of the setup.
-    // It populates the global 32-bit parameters (Iph_ref, Is0_ref, etc.)
+    // It populates the global 32-bit parameters (Iph_ref, Is_ref, etc.)
     printk("Starting 5-parameter model calculation (double-precision)...\n");
     solve_parameters(); 
     printk("Parameter calculation finished.\n");
@@ -868,11 +872,11 @@ void setup_routine() {
     printk("\n");
     printk("| --- Calculated PV Model Parameters --- |\n");
     printk("| Iph_ref = %.6f A |\n", Iph_ref);
-    printk("| Is0_ref = %.2e A |\n", Is0_ref);
+    printk("| Is_ref = %.2e A |\n", Is_ref);
     printk("| A       = %.6f |\n", A);
     printk("| Rs      = %.6f Ohms |\n", Rs);
     printk("| Rp      = %.6f Ohms |\n", Rp);
-    printk("| Conditions: S = %.1f W/m^2, T = %.1f K |\n", S, T - 273.15f); // Display T in Celsius
+    printk("| Conditions: S = %.1f W/m^2, T = %.1f K |\n", G, T - 273.15f); // Display T in Celsius
     printk("\n");
 
     // 7. Create and start all tasks
@@ -930,11 +934,10 @@ void loop_communication_task() {
                 dutyCycle = fmaxf(dutyCycle - 0.1f, 0.0f);
                 break;
             
-            // --- NEW CASE ADDED ---
             case 's': // Show solver solution
                 printk("\n| --- Current Solver Solution --- |\n");
                 printk("| Iph_ref = %.6f A |\n", Iph_ref);
-                printk("| Is0_ref = %.2e A |\n", Is0_ref);
+                printk("| Is_ref = %.2e A |\n", Is_ref);
                 printk("| A       = %.6f |\n", A);
                 printk("| Rs      = %.6f Ohms |\n", Rs);
                 printk("| Rp      = %.6f Ohms |\n", Rp);
@@ -968,6 +971,7 @@ void loop_application_task() {
         float32_t avgLowV1 = sumLowVoltage1 / measurementCount; 
         float32_t avgLowI2 = sumLowCurrent2 / measurementCount; 
         float32_t avgLowV2 = sumLowVoltage2 / measurementCount; 
+        float32_t avgHighI = sumHighCurrent / measurementCount; 
         float32_t avgHighV = sumHighVoltage / measurementCount; 
         float32_t avgLowI = avgLowI1 + avgLowI2; // Total low-side current
         float32_t avgLowV = (avgLowV1 + avgLowV2) * 0.5f; // Avg low-side voltage
@@ -976,6 +980,7 @@ void loop_application_task() {
         if (mode == MODE_POWER) {
             printk("lowCurrent [Ilow1 + Ilow2]: %f A\n", avgLowI);
             printk("lowVoltage [(Vlow1 + Vlow2)/2]: %f V\n", avgLowV);
+            printk("highCurrent: %f V\n", avgHighI);
             printk("highVoltage: %f V\n", avgHighV);
         }
 
@@ -1158,3 +1163,4 @@ int main(void) {
     setup_routine(); // Run setup
     return 0; // setup_routine() starts tasks, main() exits
 }
+    
