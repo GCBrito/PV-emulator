@@ -70,13 +70,13 @@ void setup_routine();
 
 // --- PV MODULE REFERENCE PARAMETERS (32-bit float) ---
 // These define the panel to be modeled 
-const float32_t ns = 72; // Number of cells in series
+const float32_t ns = 60; // Number of cells in series
 
 // Parameters at Standard Test Conditions (STC)
-const float32_t Vmp_mod_ref = 34.0f; // Voltage at max power (V)
-const float32_t Imp_mod_ref = 4.4f; // Current at max power (A)
-const float32_t Voc_mod_ref = 43.4f; // Open-circuit voltage (V)
-const float32_t Isc_mod_ref = 4.8f; // Short-circuit current (A)
+const float32_t Vmp_mod_ref = 30.1f; // Voltage at max power (V)
+const float32_t Imp_mod_ref = 8.30f; // Current at max power (A)
+const float32_t Voc_mod_ref = 37.2f; // Open-circuit voltage (V)
+const float32_t Isc_mod_ref = 8.87f; // Short-circuit current (A)
 
 const float32_t T_ref = 25.0f + 273.15f; // Reference Temperature (K)
 const float32_t G_ref = 1000.0f; // Reference Irradiance (W/m^2)
@@ -328,60 +328,62 @@ void unscale_params_d(const Vector5 x_scaled, double *Iph_param, double *Is_para
 
 
 /**
- * @brief Calculates the residual vector F(x) for the 5-parameter model.
- * The goal of the solver is to find an 'x' that makes F(x) = [0,0,0,0,0].
+ * @brief Calculates the residual vector F(x) for the 5-parameter solar cell model.
+ * The goal of the solver is to find an 'x' such that F(x) = [0,0,0,0,0].
  * * @param x_scaled The scaled parameter vector: [Iph, log10(Is), A, log10(Rs), Rp]
  * @param F        The output residual vector (5x1).
  */
 void residuals_2_20_double(const Vector5 x_scaled, Vector5 F) {
     double Iph_param, Is_param, A_param, Rs_param, Rp_param;
+    
+    // Convert scaled parameters back to physical units
     unscale_params_d(x_scaled, &Iph_param, &Is_param, &A_param, &Rs_param, &Rp_param);
 
+    // Safety bounds to prevent division by zero or non-physical values
     double A_safe = fmax(0.1, A_param);
     double Rp_safe = fmax(0.01, Rp_param);
 
     // --- Intermediate Terms ---
+    // Thermal voltage constant: C = q / (n * k * T)
     double C_denominator = A_safe * SOLVER_k_d * SOLVER_T_ref_K_d;
     if (fabs(C_denominator) < 1e-35) C_denominator = 1e-35;
     double C = SOLVER_q_d / C_denominator; 
-    double cap = 700.0; 
 
-    // Arguments for the exponentials
-    double arg_sc = cap_exp_arg_double(C * Rs_param * SOLVER_ISC_MOD_REF_d); 
-    double arg_oc = cap_exp_arg_double(C * SOLVER_VOC_MOD_REF_d); 
-    double arg_mp = cap_exp_arg_double(C * (Rs_param * SOLVER_IMP_MOD_REF_d + SOLVER_VMP_MOD_REF_d));
-    double arg_eq5 = cap_exp_arg_double(C * SOLVER_ISC_MOD_REF_d); 
+    // Arguments for the exponentials based on MATLAB logic
+    double arg_sc  = C * SOLVER_ISC_MOD_REF_d * Rs_param;
+    double arg_oc  = C * SOLVER_VOC_MOD_REF_d;
+    double arg_mp  = C * (SOLVER_VMP_MOD_REF_d + SOLVER_IMP_MOD_REF_d * Rs_param);
 
-    double exp_sc = exp(arg_sc);
-    double exp_oc = exp(arg_oc);
-    double exp_mp = exp(arg_mp);
-    double exp_eq5 = exp(arg_eq5); // Exponential for F[3]
+    // Calculate exponentials with overflow protection
+    double exp_sc = exp(cap_exp_arg_double(arg_sc));
+    double exp_oc = exp(cap_exp_arg_double(arg_oc));
+    double exp_mp = exp(cap_exp_arg_double(arg_mp));
 
-    if (!is_finite_double(exp_sc) || !is_finite_double(exp_oc) || !is_finite_double(exp_mp) || !is_finite_double(exp_eq5)) {
+    // Stability check: if exponentials explode, return a high penalty value
+    if (!is_finite_double(exp_sc) || !is_finite_double(exp_oc) || !is_finite_double(exp_mp)) {
         for (int i = 0; i < 5; ++i) F[i] = DBL_MAX / 10.0; 
         return;
     }
 
-    // --- Residual Equations ---
+    // --- Residual Equations (Aligned with MATLAB F(1) through F(5)) ---
 
-    double term0_Rp = (Rs_param * SOLVER_ISC_MOD_REF_d) / Rp_safe;
-    F[0] = SOLVER_ISC_MOD_REF_d - (Iph_param - Is_param * (exp_sc - 1.0) - term0_Rp);
+    // F[0] (Short-Circuit): Iph - Is0*(exp(C*Isc*Rs)-1) - (Isc*Rs)/Rp - Isc
+    F[0] = Iph_param - Is_param * (exp_sc - 1.0) - (SOLVER_ISC_MOD_REF_d * Rs_param) / Rp_safe - SOLVER_ISC_MOD_REF_d;
 
-    double term1_Rp = (SOLVER_VOC_MOD_REF_d) / Rp_safe;
-    F[1] = 0 - (Iph_param - Is_param * (exp_oc - 1.0) - term1_Rp);
+    // F[1] (Open-Circuit): Iph - Is0*(exp(C*Voc)-1) - Voc/Rp
+    F[1] = Iph_param - Is_param * (exp_oc - 1.0) - SOLVER_VOC_MOD_REF_d / Rp_safe;
 
-    double term2_Rp = (Rs_param * SOLVER_IMP_MOD_REF_d + SOLVER_VMP_MOD_REF_d) / Rp_safe;
-    F[2] = SOLVER_IMP_MOD_REF_d - (Iph_param - Is_param * (exp_mp - 1.0) - term2_Rp);
+    // F[2] (MPP Current): Iph - Is0*(exp(C*(Vmp + Imp*Rs))-1) - (Vmp + Imp*Rs)/Rp - Imp
+    F[2] = Iph_param - Is_param * (exp_mp - 1.0) - (SOLVER_VMP_MOD_REF_d + SOLVER_IMP_MOD_REF_d * Rs_param) / Rp_safe - SOLVER_IMP_MOD_REF_d;
 
-    double term4_coeff = (SOLVER_q_d * Is_param * Rp_safe * (Rs_param - Rp_safe)) / C_denominator; 
-    F[3] = Rs_param + term4_coeff * exp_eq5; 
+    // F[3] (Power Derivative at MPP): Iph - 2*Vmp/Rp - Is0*((1 + C*(Vmp - Imp*Rs))*exp(C*(Vmp + Imp*Rs)) - 1)
+    double term_bracket_mp = (1.0 + C * (SOLVER_VMP_MOD_REF_d - SOLVER_IMP_MOD_REF_d * Rs_param)) * exp_mp - 1.0;
+    F[3] = Iph_param - (2.0 * SOLVER_VMP_MOD_REF_d) / Rp_safe - Is_param * term_bracket_mp;
 
-    double term5_bracket_coeff = 1.0 + C * (SOLVER_VMP_MOD_REF_d - Rs_param * SOLVER_IMP_MOD_REF_d); 
-    double term5_inside_bracket = term5_bracket_coeff * exp_mp; 
-    double term5_Rp = (2.0 * SOLVER_VMP_MOD_REF_d) / Rp_safe;
-    
-    F[4] = Iph_param - term5_Rp + Is_param - Is_param * term5_inside_bracket;
+    // F[4] (Short-Circuit Slope): Rs + Is0 * C * Rp * (Rs - Rp) * exp(C * Isc * Rs)
+    F[4] = Rs_param + Is_param * C * Rp_safe * (Rs_param - Rp_safe) * exp_sc;
 
+    // --- Final Robustness Check ---
     for (int i = 0; i < 5; ++i) {
         if (!is_finite_double(F[i])) {
             F[i] = DBL_MAX / 10.0; 
@@ -632,7 +634,7 @@ void solve_parameters() {
     Vector5 initial_x_scaled_d;
     initial_x_scaled_d[0] = (double)Isc_mod_ref; // Iph_ref_0 ~ Is_mod_ref
     initial_x_scaled_d[1] = log10(1e-9);          //log10(Is_ref_0)
-    initial_x_scaled_d[2] = 0.5*ns;                  // A 
+    initial_x_scaled_d[2] = ns;                  // A 
     initial_x_scaled_d[3] = log10(Rs_0);         // log10(Rs_0)
     initial_x_scaled_d[4] = log10(Rp_0);                // Rp_0
 

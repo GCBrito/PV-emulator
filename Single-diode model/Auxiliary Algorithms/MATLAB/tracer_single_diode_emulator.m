@@ -2,12 +2,12 @@ clc; clear; close all; format long
 
 %% Module Parameters
 
-ns = 72;       % number of series cells
+ns = 36;       % number of series cells
 
-Vmp_mod_ref = 17.4;     % voltage at maximum power point (V)
-Imp_mod_ref = 5.02;     % current at maximum power point (A)
-Voc_mod_ref = 21.7;     % open-circuit voltage (V)
-Isc_mod_ref = 5.34;     % short-circuit current (A)
+Vmp_mod_ref = 16.9;     % voltage at maximum power point (V)
+Imp_mod_ref = 4.73;     % current at maximum power point (A)
+Voc_mod_ref = 21.5;     % open-circuit voltage (V)
+Isc_mod_ref = 4.97;     % short-circuit current (A)
 
 Tref = 25 + 273.15; % Reference temperature (K)
 Gref = 1000; % Reference irradiance (W/m²)
@@ -424,19 +424,14 @@ hold off;
 
 function F = residuals_2_20(x, Voc, Isc, Vmp, Imp, q, k, Tref)
     Iph = x(1); Is0 = x(2); A = x(3); Rs = x(4); Rp = x(5);
-    C   = q/(A*k*Tref);
-    cap = 700;
-    a_sc = min(C*Rs*Isc, cap);
-    a_oc = min(C*Voc, cap);
-    a_mp = min(C*(Rs*Imp+Vmp), cap);
-    a_eq5 = min(C*Isc, cap); 
+    C = q / (A * k * Tref);
+    
     F = zeros(5,1);
-    F(1) = Isc - ( Iph - Is0*(exp(a_sc)-1) - (Rs*Isc)/Rp );
-    F(2) = 0   - ( Iph - Is0*(exp(a_oc)-1) - (Voc)/Rp );
-    F(3) = Imp - ( Iph - Is0*(exp(a_mp)-1) - (Rs*Imp+Vmp)/Rp );
-    F(4) = Rs + (q*Is0*Rp*(Rs-Rp)/(A*k*Tref))*exp(a_eq5);
-    term_coeff = 1 + q*(Vmp - Rs*Imp)/(A*k*Tref);
-    F(5) = Iph - 2*Vmp/Rp + Is0 - Is0 * term_coeff * exp(a_mp);
+    F(1) = Iph - Is0*(exp(C*Isc*Rs)-1) - (Isc*Rs)/Rp - Isc;
+    F(2) = Iph - Is0*(exp(C*Voc)-1) - Voc/Rp;
+    F(3) = Iph - Is0*(exp(C*(Vmp + Imp*Rs))-1) - (Vmp + Imp*Rs)/Rp - Imp;
+    F(4) = Iph - 2*Vmp/Rp - Is0*((1 + C*(Vmp - Imp*Rs))*exp(C*(Vmp + Imp*Rs)) - 1);
+    F(5) = Rs + Is0 * C * Rp * (Rs - Rp) * exp(C * Isc * Rs);
 end
 
 function I = solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, ...
