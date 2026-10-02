@@ -1,7 +1,12 @@
-% MATLAB Script to plot PV Panel Error Analysis - FINAL VERSION (ALL UPDATED)
+
 clear; clc; close all;
 
-%% 1. Data Input (All tables updated from Excel)
+%% 1. Data Input 
+
+% Data format for all matrices:
+% [Vout_OT [V], Iout_OT [A], Voltage error [%], Current error [%]]
+%
+% Each row corresponds to one operating point.
 
 % --- Canadian Solar CS6P-250P ---
 data_CS = [
@@ -118,52 +123,183 @@ data_KC85_RL = [
 %% 2. Figure Settings
 lineW = 1.5; fLabelSize = 30; fLegendSize = 22;
 
-%% Figure 1: Current Error (Original 3 Panels)
 figure(1);
 semilogy(data_CS(:,2), data_CS(:,4), '-o', 'LineWidth', lineW); hold on;
 semilogy(data_KC200(:,2), data_KC200(:,4), '-s', 'LineWidth', lineW);
 semilogy(data_KB260(:,2), data_KB260(:,4), '-^', 'LineWidth', lineW);
-grid on;
+
 xlabel('$I_{out}^{OT}\,[\mathrm{A}]$', 'Interpreter','latex','FontSize',fLabelSize);
-ylabel('$\log\!\left(E_{I_{out}}\right)\,[\%]$', 'Interpreter','latex','FontSize',fLabelSize);
+ylabel('$E_{I_{out}}\,[\%]$', 'Interpreter','latex','FontSize',fLabelSize);
+
 lgd1 = legend({'$\mathrm{Canadian\ Solar\ CS6P\!-\!250P}$', '$\mathrm{Kyocera\ KC200GT}$', '$\mathrm{Kyocera\ KB260\!-\!6BPA}$'}, ...
                'Interpreter','latex','Location','northeast');
 set(lgd1,'FontSize',fLegendSize, 'FontName', 'Times New Roman');
 set(gca,'FontSize',fLabelSize, 'TickLabelInterpreter','latex');
 
+ax = gca;
+ax.YScale = 'log';
+ax.YLim = [1e-3 1e3];
+ax.YTick = 10.^(-3:3);
+ax.YAxis.MinorTickValues = sort([ ...
+    (2:9)*1e-3, ...
+    (2:9)*1e-2, ...
+    (2:9)*1e-1, ...
+    (2:9)*1e0, ...
+    (2:9)*1e1, ...
+    (2:9)*1e2 ]);
+
+ax.YGrid = 'on';
+ax.YMinorGrid = 'on';
+ax.XGrid = 'on';
+ax.XMinorGrid = 'off';
+
+ax.GridLineStyle = '-';
+ax.MinorGridLineStyle = ':';
+ax.GridAlpha = 0.25;
+ax.MinorGridAlpha = 0.35;
 %% Figure 2: Voltage Error (Original 3 Panels)
 figure(2);
-plot(data_CS(:,1), data_CS(:,3), '-o', 'LineWidth', lineW); hold on;
-plot(data_KC200(:,1), data_KC200(:,3), '-s', 'LineWidth', lineW);
-plot(data_KB260(:,1), data_KB260(:,3), '-^', 'LineWidth', lineW);
-grid on;
+
+semilogy(data_CS(:,1), data_CS(:,3), '-o', 'LineWidth', lineW); hold on;
+semilogy(data_KC200(:,1), data_KC200(:,3), '-s', 'LineWidth', lineW);
+semilogy(data_KB260(:,1), data_KB260(:,3), '-^', 'LineWidth', lineW);
+
 xlabel('$V_{out}^{OT}\,[\mathrm{V}]$', 'Interpreter','latex','FontSize',fLabelSize);
 ylabel('$E_{V_{out}}\,[\%]$', 'Interpreter','latex','FontSize',fLabelSize);
-lgd2 = legend({'$\mathrm{Canadian\ Solar\ CS6P\!-\!250P}$', '$\mathrm{Kyocera\ KC200GT}$', '$\mathrm{Kyocera\ KB260\!-\!6BPA}$'}, ...
-               'Interpreter','latex','Location','northeast');
-set(lgd2,'FontSize',fLegendSize, 'FontName', 'Times New Roman');
-set(gca,'FontSize',fLabelSize, 'TickLabelInterpreter','latex');
+
+lgd2 = legend({ ...
+    '$\mathrm{Canadian\ Solar\ CS6P\!-\!250P}$', ...
+    '$\mathrm{Kyocera\ KC200GT}$', ...
+    '$\mathrm{Kyocera\ KB260\!-\!6BPA}$'}, ...
+    'Interpreter','latex', 'Location','northeast');
+
+set(lgd2, 'FontSize', fLegendSize, 'FontName', 'Times New Roman');
+set(gca, 'FontSize', fLabelSize, 'TickLabelInterpreter', 'latex');
+
+%% 4. Configure log grid on Y axis
+ax = gca;
+
+% Log scale and limits
+ax.YScale = 'log';
+ax.YLim = [1e-3 1e3];
+
+% Major ticks: powers of 10
+ax.YTick = 10.^(-3:3);
+
+% Minor ticks: 2 to 9 within each decade
+ax.YAxis.MinorTickValues = sort([ ...
+    (2:9)*1e-3, ...
+    (2:9)*1e-2, ...
+    (2:9)*1e-1, ...
+    (2:9)*1e0, ...
+    (2:9)*1e1, ...
+    (2:9)*1e2 ]);
+
+% Grid only where wanted
+ax.YGrid = 'on';
+ax.YMinorGrid = 'on';
+ax.XGrid = 'on';
+ax.XMinorGrid = 'off';
+
+% Grid appearance
+ax.GridLineStyle = '-';
+ax.MinorGridLineStyle = ':';
+ax.GridAlpha = 0.25;
+ax.MinorGridAlpha = 0.35;
 
 %% Figure 3: Current Error (KC85TS: R vs RL)
+
 figure(3);
-semilogy(data_KC85_R(:,2), data_KC85_R(:,4), '-d', 'LineWidth', lineW); hold on;
+
+semilogy(data_KC85_R(:,2),  data_KC85_R(:,4),  '-d', 'LineWidth', lineW); hold on;
 semilogy(data_KC85_RL(:,2), data_KC85_RL(:,4), '-x', 'LineWidth', lineW);
-grid on;
+
 xlabel('$I_{out}^{OT}\,[\mathrm{A}]$', 'Interpreter','latex','FontSize',fLabelSize);
-ylabel('$\log\!\left(E_{I_{out}}\right)\,[\%]$', 'Interpreter','latex','FontSize',fLabelSize);
-lgd3 = legend({'$\mathrm{Kyocera\ KC85TS\ (R\ load)}$', '$\mathrm{Kyocera\ KC85TS\ (RL\ load)}$'}, ...
-               'Interpreter','latex','Location','northeast');
-set(lgd3,'FontSize',fLegendSize, 'FontName', 'Times New Roman');
-set(gca,'FontSize',fLabelSize, 'TickLabelInterpreter','latex');
+ylabel('$E_{I_{out}}\,[\%]$', 'Interpreter','latex','FontSize',fLabelSize);
+
+lgd3 = legend({ ...
+    '$\mathrm{Kyocera\ KC85TS\ (R\ load)}$', ...
+    '$\mathrm{Kyocera\ KC85TS\ (RL\ load)}$'}, ...
+    'Interpreter','latex', 'Location','northeast');
+
+set(lgd3, 'FontSize', fLegendSize, 'FontName', 'Times New Roman');
+set(gca, 'FontSize', fLabelSize, 'TickLabelInterpreter', 'latex');
+
+%% --- Log grid configuration (10^-2 to 10^3) ---
+ax = gca;
+
+ax.YScale = 'log';
+ax.YLim = [1e-2 1e3];
+
+% Major ticks (decades)
+ax.YTick = 10.^(-2:3);
+
+% Minor ticks (2..9 per decade)
+ax.YAxis.MinorTickValues = sort([ ...
+    (2:9)*1e-2, ...
+    (2:9)*1e-1, ...
+    (2:9)*1e0, ...
+    (2:9)*1e1, ...
+    (2:9)*1e2 ]);
+
+% Grid
+ax.YGrid = 'on';
+ax.YMinorGrid = 'on';
+ax.XGrid = 'on';
+ax.XMinorGrid = 'off';
+
+% Appearance
+ax.GridLineStyle = '-';
+ax.MinorGridLineStyle = ':';
+ax.GridAlpha = 0.25;
+ax.MinorGridAlpha = 0.35;
 
 %% Figure 4: Voltage Error (KC85TS: R vs RL)
+
 figure(4);
-plot(data_KC85_R(:,1), data_KC85_R(:,3), '-d', 'LineWidth', lineW); hold on;
-plot(data_KC85_RL(:,1), data_KC85_RL(:,3), '-x', 'LineWidth', lineW);
-grid on;
+
+semilogy(data_KC85_R(:,1),  data_KC85_R(:,3),  '-d', 'LineWidth', lineW); hold on;
+semilogy(data_KC85_RL(:,1), data_KC85_RL(:,3), '-x', 'LineWidth', lineW);
+
+%% --- Limites do eixo X (margem desejada) ---
+xlim([0 25]);   % <<< AQUI está a margem
+
 xlabel('$V_{out}^{OT}\,[\mathrm{V}]$', 'Interpreter','latex','FontSize',fLabelSize);
 ylabel('$E_{V_{out}}\,[\%]$', 'Interpreter','latex','FontSize',fLabelSize);
-lgd4 = legend({'$\mathrm{Kyocera\ KC85TS\ (R\ load)}$', '$\mathrm{Kyocera\ KC85TS\ (RL\ load)}$'}, ...
-               'Interpreter','latex','Location','northeast');
-set(lgd4,'FontSize',fLegendSize, 'FontName', 'Times New Roman');
-set(gca,'FontSize',fLabelSize, 'TickLabelInterpreter','latex');
+
+lgd4 = legend({ ...
+    '$\mathrm{Kyocera\ KC85TS\ (R\ load)}$', ...
+    '$\mathrm{Kyocera\ KC85TS\ (RL\ load)}$'}, ...
+    'Interpreter','latex', 'Location','northeast');
+
+set(lgd4, 'FontSize', fLegendSize, 'FontName', 'Times New Roman');
+set(gca, 'FontSize', fLabelSize, 'TickLabelInterpreter', 'latex');
+
+%% --- Configuração log no eixo Y (10^-2 a 10^3) ---
+ax = gca;
+
+ax.YScale = 'log';
+ax.YLim = [1e-2 1e3];
+
+% Ticks principais
+ax.YTick = 10.^(-2:3);
+
+% Ticks menores (grade log verdadeira)
+ax.YAxis.MinorTickValues = sort([ ...
+    (2:9)*1e-2, ...
+    (2:9)*1e-1, ...
+    (2:9)*1e0, ...
+    (2:9)*1e1, ...
+    (2:9)*1e2 ]);
+
+% Grade
+ax.YGrid = 'on';
+ax.YMinorGrid = 'on';
+ax.XGrid = 'on';
+ax.XMinorGrid = 'off';
+
+% Estilo
+ax.GridLineStyle = '-';
+ax.MinorGridLineStyle = ':';
+ax.GridAlpha = 0.25;
+ax.MinorGridAlpha = 0.35;

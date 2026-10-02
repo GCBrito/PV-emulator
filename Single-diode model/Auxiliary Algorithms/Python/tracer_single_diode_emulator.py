@@ -1,305 +1,412 @@
+"""Plot the single-diode model, resistive load lines and emulator measurements."""
+import argparse
+
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import fsolve
+from matplotlib import font_manager
 
-plt.close('all')
 
-## Module Parameters
-ns      = 60       # number of cells in series
+def configure_plots(font_size=30):
+    """Use Times New Roman where installed; otherwise use a serif fallback."""
+    fonts = {font.name for font in font_manager.fontManager.ttflist}
+    family = "Times New Roman" if "Times New Roman" in fonts else "DejaVu Serif"
+    plt.rcParams.update({
+        "font.family": family, "font.size": font_size,
+        "mathtext.fontset": "stix", "figure.facecolor": "white",
+        "axes.labelsize": font_size, "xtick.labelsize": font_size,
+        "ytick.labelsize": font_size, "legend.fontsize": 20,
+    })
 
-Vmp_mod_ref  = 30.1     # voltage at maximum power point (V)
-Imp_mod_ref  = 8.30     # current at maximum power point (A)
-Voc_mod_ref  = 37.2     # open-circuit voltage (V)
-Isc_mod_ref  = 8.87     # short-circuit current (A)
 
-Tref = 25 + 273.15 # Reference temperature (K)
-Sref = 1000 # Reference irradiance (W/m²)
+def finish(figures, args):
+    """Display interactive plot windows without writing image files."""
+    if not args.no_show:
+        plt.show()
+    else:
+        for _, figure in figures:
+            plt.close(figure)
 
-alpha   = 0.00065  # temperature coefficient of Isc (%/K)
-beta = -0.0037 # temperature coefficient of Voc (%/K)
 
-## Operating Conditions
-T = 44.5 + 273.15 # Current temperature (K)
-S = 765 # Current irradiance (W/m²)
+def plot_arguments(description):
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--no-show", action="store_true", help="Do not open plot windows.")
+    return parser
 
-## Physical Constants
-q = 1.60217662e-19 # Elementary charge (C)
-k = 1.38064852e-23 # Boltzmann constant (J/K)
-E_G0 = 1.166            # Band gap energy at 0K (eV)
-k1   = 4.73e-4          # Coefficient k1 (eV/K)
-k2   = 636              # Coefficient k2 (K)
+from scipy.optimize import least_squares
 
-## --- Auxiliary Functions ---
-def residuals_2_20(x, Voc, Isc, Vmp, Imp, q, k, Tref):
+Q = 1.60217662e-19
+K = 1.38064852e-23
+E_G0 = 1.166
+K1 = 4.73e-4
+K2 = 636.0
+
+
+def residuals_2_20(x, Voc, Isc, Vmp, Imp, Tref):
+    """The five original MATLAB equations, in physical parameter coordinates.
+
+    x = [Iph (A), Is0 (A), A, Rs (ohm), Rp (ohm)].
+    A is the module effective ideality factor, usually n * ns.
+    """
     Iph, Is0, A, Rs, Rp = x
-    C   = q/(A*k*Tref)
-    cap = 700
-    a_sc = min(C*Rs*Isc, cap)
-    a_oc = min(C*Voc, cap)
-    a_mp = min(C*(Rs*Imp+Vmp), cap)
-    a_eq5 = min(C*Isc, cap) 
-    
-    F = np.zeros(5)
-    F[0] = Isc - ( Iph - Is0*(np.exp(a_sc)-1) - (Rs*Isc)/Rp )
-    F[1] = 0   - ( Iph - Is0*(np.exp(a_oc)-1) - (Voc)/Rp )
-    F[2] = Imp - ( Iph - Is0*(np.exp(a_mp)-1) - (Rs*Imp+Vmp)/Rp )
-    F[3] = Rs + (q*Is0*Rp*(Rs-Rp)/(A*k*Tref))*np.exp(a_eq5)
-    term_coeff = 1 + q*(Vmp - Rs*Imp)/(A*k*Tref)
-    F[4] = Iph - 2*Vmp/Rp + Is0 - Is0 * term_coeff * np.exp(a_mp)
-    return F
+    C = Q / (A * K * Tref)
+    exp_sc = np.exp(np.clip(C * Isc * Rs, -700, 700))
+    exp_oc = np.exp(np.clip(C * Voc, -700, 700))
+    exp_mp = np.exp(np.clip(C * (Vmp + Imp * Rs), -700, 700))
+    return np.array([
+        Iph - Is0 * (exp_sc - 1) - Isc * Rs / Rp - Isc,
+        Iph - Is0 * (exp_oc - 1) - Voc / Rp,
+        Iph - Is0 * (exp_mp - 1) - (Vmp + Imp * Rs) / Rp - Imp,
+        Iph - 2 * Vmp / Rp - Is0 * ((1 + C * (Vmp - Imp * Rs)) * exp_mp - 1),
+        Rs + Is0 * C * Rp * (Rs - Rp) * exp_sc,
+    ])
 
-def solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2, ns):
-    # 1. Photocurrent (Iph) 
-    Iph = Iph_ref * (S / Sref) * (1 + alpha * (T - Tref))
-    # 2. Calculation of Saturation Current (Is)
-    # 2a. Calculation of band gap energy in eV at temperature T: Eg(T)
-    Eg_T_eV = E_G0 - (k1 * T**2) / (T + k2)
-    # 2b. Calculation of the temperature difference term
-    temp_diff = (1 / Tref) - (1 / T)
-    # 2c. Calculation of the exponent 
-    exponent_term = (ns*q / (A * k)) * Eg_T_eV * temp_diff 
-    # 2d. Final calculation of Is(T)
-    Is = Is0_ref * (T / Tref)**3 * np.exp(exponent_term)
-    
-    # 3. Iterative Solver (Newton-Raphson)
-    I = Iph # Initial guess
+
+def estimate_parameters(Voc, Isc, Vmp, Imp, ns, Tref=298.15):
+    """Solve the original five equations with consistent positive coordinates.
+
+    The MATLAB initial vector mixes log10(Is0), log10(Rs) with physical
+    values, although residuals_2_20 uses only physical values. Here ALL
+    parameters are optimized in log coordinates and decoded before evaluation.
+    Scaling changes conditioning only, not the roots of the equations.
+    A solution is accepted only after checking the original residuals.
+    """
+    if not (Voc > Vmp > 0 and Isc > Imp > 0 and ns > 0 and Tref > 0):
+        raise ValueError("Require Voc > Vmp > 0, Isc > Imp > 0, ns > 0 and Tref > 0.")
+    Rs0 = (Voc - Vmp) / Imp
+    Rp0 = Vmp / (Isc - Imp)
+    scale = np.array([Isc, Isc, Isc, Isc, max(Rs0, 0.1)])
+    lower = np.log([Isc * 0.5, 1e-30, ns * 0.05, 1e-12, 1e-3])
+    upper = np.log([Isc * 2, 1.0, ns * 5, Voc / Isc, 1e9])
+
+    def objective(log_x):
+        return residuals_2_20(np.exp(log_x), Voc, Isc, Vmp, Imp, Tref) / scale
+
+    best = None
+    for A0 in (ns, 0.5 * ns, 1.5 * ns):
+        x0 = np.array([Isc, 1e-9, A0, min(Rs0 * 0.2, Voc / Isc * 0.9), Rp0])
+        result = least_squares(objective, np.log(x0), bounds=(lower, upper),
+                               ftol=1e-13, xtol=1e-13, gtol=1e-13, max_nfev=2000)
+        error = np.max(np.abs(objective(result.x)))
+        if best is None or error < best[0]:
+            best = (error, np.exp(result.x))
+        if result.success and error < 1e-9:
+            break
+    if best[0] > 1e-8:
+        raise RuntimeError(f"Parameter estimation did not converge: scaled residual = {best[0]:.3g}")
+    return best[1]
+
+
+def print_parameters(parameters):
+    Iph_ref, Is0_ref, A, Rs, Rp = parameters
+    print(f"Iph_ref = {Iph_ref:.6f} A")
+    print(f"Is0_ref = {Is0_ref:.2e} A")
+    print(f"A       = {A:.6f}")
+    print(f"Rs      = {Rs:.6f} Ohms")
+    print(f"Rp      = {Rp:.6f} Ohms")
+
+
+def solve_I_V_2_11(V, Iph_ref, Is0_ref, A, Rs, Rp, G=1000.0,
+                   Gref=1000.0, alpha=0.0003, T=298.15, Tref=298.15, ns=72):
+    """Original temperature/irradiance law and Newton-Raphson current solve.
+
+    V can be a scalar or array. Temperature arguments are in kelvin;
+    alpha is a relative coefficient in 1/K. Negative current is retained,
+    as in MATLAB, if the applied voltage exceeds the model's actual Voc.
+    """
+    if G < 0 or Gref <= 0 or T <= 0 or Tref <= 0:
+        raise ValueError("Invalid irradiance or absolute temperature.")
+    V = np.asarray(V, dtype=float)
+    Iph = Iph_ref * (G / Gref) * (1 + alpha * (T - Tref))
+    Eg_T_eV = E_G0 - K1 * T**2 / (T + K2)
+    exponent = ns * Q / (A * K) * Eg_T_eV * (1 / Tref - 1 / T)
+    Is = Is0_ref * (T / Tref)**3 * np.exp(exponent)
+    current = np.full_like(V, Iph)
+    active = np.ones(V.shape, dtype=bool)
     for _ in range(30):
-        V_diode = V + I * Rs
-        arg_exp = min(q * V_diode / (A * k * T), 700) 
-        expo = np.exp(arg_exp)
-        f = Iph - Is * (expo - 1) - V_diode / Rp - I
-        df = -Is * expo * (q * Rs / (A * k * T)) - Rs / Rp - 1
-        dI = -f / df
-        I = I + dI
-        if abs(dI) < 1e-6: break
-    return I
+        diode_voltage = V + current * Rs
+        expo = np.exp(np.minimum(Q * diode_voltage / (A * K * T), 700))
+        f = Iph - Is * (expo - 1) - diode_voltage / Rp - current
+        df = -Is * expo * Q * Rs / (A * K * T) - Rs / Rp - 1
+        delta = -f / df
+        current = np.where(active, current + delta, current)
+        active &= np.abs(delta) >= 1e-6
+        if not np.any(active):
+            return float(current) if current.ndim == 0 else current
+    raise RuntimeError("Newton-Raphson did not converge within 30 iterations.")
 
-## Parameter Estimation via fsolve
-x0 = [Isc_mod_ref, 1e-9, ns, 0.05, 500]
-xsol, info, ier, msg = fsolve(residuals_2_20, x0, args=(Voc_mod_ref, Isc_mod_ref, Vmp_mod_ref, Imp_mod_ref, q, k, Tref), full_output=True)
 
-if ier != 1:
-    print(f"Warning: fsolve did not converge: {msg}")
+# Editable reference module and operating conditions (Shell Solar SQ150-PC).
+NS = 72
+VMP_MOD_REF = 34.0
+IMP_MOD_REF = 4.4
+VOC_MOD_REF = 43.4
+ISC_MOD_REF = 4.8
+TREF = 25 + 273.15
+GREF = 1000.0
+ALPHA = 0.0003  # relative Isc temperature coefficient [1/K]
+BETA = -0.0037  # relative Voc temperature coefficient [1/K]
+TEMPERATURE_C = 25.0
+IRRADIANCE = 1000.0
 
-Iph_ref, Is0_ref, A, Rs, Rp = xsol
-print(f'Iph_ref = {Iph_ref:.6f} A')
-print(f'Is0_ref = {Is0_ref:.2e} A')
-print(f'A       = {A:.6f}')
-print(f'Rs      = {Rs:.6f} Ohms')
-print(f'Rp      = {Rp:.6f} Ohms')
+FACTORS = np.array([0.00, 0.20, 0.40, 0.60, 0.70, 0.80, 0.85, 0.88, 0.90, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.00, 1.01, 1.02, 1.03, 1.04, 1.05, 1.08, 1.12], dtype=float)
 
-## Characteristic Points (Adaptive Embedded Strategy - High Precision Knee)
-Voc_estimation = Voc_mod_ref * (1 + beta * (T - Tref))
-Vmp_estimation = Vmp_mod_ref * (Voc_estimation / Voc_mod_ref)
-factors = np.array([0.00, 0.20, 0.40, 0.60, 0.70, 0.80, 0.85, 0.88, 0.90, 0.92, 0.93, 0.94, 0.95, 
-                    0.96, 0.97, 0.98, 0.99, 1.00, 1.01, 1.02, 1.03, 1.04, 1.05, 1.08, 1.12])
+# Active MATLAB measurement rows. Columns:
+# V_test [V], I_test [A], V_emulator [V], I_emulator [A], R_load [ohm].
+MEASUREMENTS = np.array([
+    [45.001869, 9.165687, 23.428795, 4.771824, 4.909819599],
+    [45.002346, 8.243192, 25.957676, 4.754732, 5.459335247],
+    [45.00293, 7.68873, 27.723593, 4.736563, 5.8531034],
+    [45.002434, 7.429503, 28.600252, 4.721648, 6.057260516],
+    [45.006149, 7.207458, 29.371901, 4.70373, 6.244384988],
+    [45.009201, 6.976861, 30.186039, 4.679128, 6.451210354],
+    [45.00576, 6.623515, 31.42337, 4.624589, 6.794845985],
+    [45.007038, 6.370541, 32.285755, 4.569901, 7.064869677],
+    [45.006256, 6.092615, 33.184868, 4.492322, 7.387019007],
+    [45.003723, 5.867533, 33.870052, 4.415938, 7.669956417],
+    [45.006004, 5.55717, 34.74757, 4.290498, 8.098726535],
+    [45.006401, 5.199488, 35.65852, 4.119548, 8.655930214],
+    [45.007046, 4.942261, 36.230217, 3.97847, 9.106570365],
+    [45.009201, 4.642657, 36.874702, 3.803591, 9.694707449],
+    [45.006428, 4.315445, 37.490471, 3.594777, 10.42915068],
+    [45.005337, 3.995132, 38.099937, 3.382138, 11.26504507],
+    [45.006454, 3.076956, 39.200233, 2.680002, 14.6269417],
+    [45.010605, 1.953921, 40.635674, 1.764004, 23.03604414],
+    [45.032486, 0.160229, 43.159355, 0.153565, 281.0494253],
+], dtype=float)
 
-V_mod = factors * Vmp_estimation
-V_mod = V_mod[V_mod < Voc_estimation] 
-V_mod = V_mod[V_mod >= 0]
-V_mod = np.sort(np.unique(np.append(V_mod, Voc_estimation)))
+# Inactive measurement datasets preserved from the original MATLAB comments.
+# To use one, also update the reference module and G/T settings above.
+ALTERNATIVE_MEASUREMENTS = {
+    'CanadianSolar CS6P-250P': np.array([
+        [36.470619, 10.97875, 22.642405, 6.816042, 3.321928621],
+        [36.469147, 10.580585, 23.414888, 6.793228, 3.446798488],
+        [36.011593, 10.135595, 24.056635, 6.770828, 3.552982737],
+        [36.008194, 9.758461, 24.833183, 6.729959, 3.689945659],
+        [36.011219, 9.268014, 25.833637, 6.648664, 3.885538057],
+        [36.012985, 8.819846, 26.70089, 6.539245, 4.083176269],
+        [36.00943, 8.417071, 27.416254, 6.408448, 4.278142539],
+        [36.009499, 8.022567, 28.057871, 6.251021, 4.488526114],
+        [36.011665, 7.394004, 28.952494, 5.944597, 4.870388018],
+        [36.014778, 6.823575, 29.632019, 5.614259, 5.277992875],
+        [36.012032, 6.198761, 30.29425, 5.214557, 5.809553908],
+        [36.01263, 5.744209, 30.687252, 4.894783, 6.26937946],
+        [36.012844, 5.41966, 30.963587, 4.659785, 6.644853142],
+        [36.013351, 4.885607, 31.42931, 4.263731, 7.371316342],
+        [36.014511, 4.044705, 31.895897, 3.582153, 8.904113532],
+        [36.019165, 2.940577, 32.502819, 2.653505, 12.24901366],
+        [36.026188, 1.518282, 33.319305, 1.404204, 23.72825102],
+        [36.04068, 0.271503, 34.06929, 0.256652, 132.7450789],
+    ], dtype=float),
+    'Kyocera KB260-6BPA': np.array([
+        [38.970139, 10.476988, 24.569763, 6.605496, 3.719593956],
+        [38.970062, 11.051579, 23.384464, 6.631636, 3.526198362],
+        [38.9701, 10.006746, 25.593412, 6.571879, 3.894382718],
+        [38.478722, 9.397497, 26.668896, 6.513233, 4.09457116],
+        [38.481834, 8.949709, 27.661718, 6.433278, 4.299785895],
+        [38.481712, 8.526176, 28.55562, 6.326908, 4.513361029],
+        [38.97081, 8.168219, 29.45533, 6.17379, 4.771028817],
+        [38.484024, 7.527627, 30.391579, 5.944713, 5.11237111],
+        [38.485474, 6.842545, 31.405592, 5.583774, 5.624438238],
+        [38.480385, 6.376169, 31.972301, 5.297785, 6.03503181],
+        [38.480625, 6.013403, 32.411503, 5.064976, 6.399142464],
+        [38.485367, 5.482672, 32.913673, 4.688922, 7.019454152],
+        [38.481773, 5.186515, 33.195103, 4.473986, 7.419581331],
+        [38.482933, 4.712598, 33.651192, 4.120906, 8.165969328],
+        [38.483788, 3.500327, 34.301086, 3.119885, 10.99434306],
+        [38.970074, 1.690633, 35.331486, 1.532781, 23.0505767],
+        [38.513306, 0.255853, 36.170616, 0.24029, 150.5290108],
+    ], dtype=float),
+    'Kyocera KC85TS - R load': np.array([
+        [22.491886, 11.192251, 4.290837, 2.135176, 2.009594057],
+        [22.785145, 4.797872, 10.134062, 2.133931, 4.749011097],
+        [22.49477, 3.785123, 12.669167, 2.1318, 5.94294352],
+        [22.494724, 3.463998, 13.826797, 2.12921, 6.493862512],
+        [22.785276, 3.220089, 15.001449, 2.120053, 7.075978289],
+        [22.492458, 3.039437, 15.612347, 2.109718, 7.40020562],
+        [22.494221, 2.910696, 16.172581, 2.092691, 7.728126608],
+        [22.784504, 2.841723, 16.606222, 2.071157, 8.017847995],
+        [22.493919, 2.67594, 17.095009, 2.03367, 8.405989664],
+        [22.494114, 2.549509, 17.511776, 1.984805, 8.822920136],
+        [22.494652, 2.356512, 18.038937, 1.889737, 9.545739434],
+        [22.495331, 2.168992, 18.432518, 1.777257, 10.37132953],
+        [22.497145, 1.950675, 18.831503, 1.632836, 11.53300331],
+        [22.500511, 1.719844, 19.143658, 1.46326, 13.08288206],
+        [22.504717, 1.484131, 19.473244, 1.284213, 15.16356243],
+        [22.512615, 0.991903, 19.819204, 0.873231, 22.6964045],
+        [22.518124, 0.453164, 20.202765, 0.406569, 49.69086428],
+        [22.51823, 0.317759, 20.30147, 0.286478, 70.86572093],
+    ], dtype=float),
+    'Kyocera KC85TS - R+L load': np.array([
+        [22.491726, 11.401453, 4.212106, 2.135191, 1.972706891],
+        [22.784645, 4.763543, 10.206792, 2.133915, 4.7831296],
+        [22.494654, 3.790882, 12.650108, 2.131843, 5.933883499],
+        [22.494001, 3.46787, 13.811143, 2.129245, 6.486403866],
+        [22.494892, 3.18538, 14.974236, 2.12042, 7.061919808],
+        [22.493298, 3.035744, 15.629344, 2.10937, 7.409484348],
+        [22.49297, 2.908536, 16.181227, 2.092373, 7.733433284],
+        [22.495255, 2.81023, 16.588015, 2.072266, 8.004771106],
+        [22.493977, 2.670704, 17.113245, 2.031851, 8.422490133],
+        [22.493221, 2.52665, 17.581903, 1.974965, 8.902387131],
+        [22.494623, 2.340781, 18.077917, 1.881181, 9.609876455],
+        [22.493725, 2.189714, 18.393583, 1.790574, 10.27245062],
+        [22.785147, 1.989317, 18.813585, 1.64257, 11.45374931],
+        [22.501472, 1.710468, 19.156639, 1.456207, 13.15516201],
+        [22.504978, 1.49112, 19.463346, 1.28959, 15.09266201],
+        [22.512096, 1.000689, 19.813057, 0.880713, 22.49661013],
+        [22.518711, 0.457511, 20.199619, 0.410394, 49.22006413],
+        [22.517979, 0.306336, 20.309837, 0.276297, 73.50726573],
+    ], dtype=float),
+    'Kyocera KC200GT': np.array([
+        [30.799538, 10.383743, 12.533917, 4.225679, 2.966130887],
+        [30.407265, 8.72176, 14.705232, 4.217923, 3.486368054],
+        [30.411446, 7.384953, 17.256174, 4.190397, 4.118028435],
+        [30.412125, 7.033544, 18.053396, 4.175287, 4.323869473],
+        [30.408638, 6.741723, 18.770275, 4.161449, 4.510514246],
+        [30.799961, 6.556941, 19.421268, 4.134554, 4.69730665],
+        [30.411461, 6.154503, 20.231714, 4.094382, 4.941335225],
+        [30.410652, 5.776842, 21.174362, 4.022306, 5.264234496],
+        [30.410862, 5.474993, 21.89076, 3.941084, 5.554502264],
+        [30.411789, 5.199258, 22.50289, 3.847137, 5.849256213],
+        [30.411108, 4.899352, 23.111118, 3.723294, 6.20716978],
+        [30.409916, 4.590909, 23.679567, 3.574845, 6.623942297],
+        [30.410358, 4.117438, 24.440063, 3.309085, 7.385746513],
+        [30.410532, 3.747369, 24.939966, 3.073253, 8.11516852],
+        [30.412104, 3.481879, 25.292833, 2.895774, 8.734394673],
+        [30.413876, 3.004618, 25.808134, 2.549612, 10.12237705],
+        [30.411911, 2.620044, 26.232281, 2.259961, 11.60740429],
+        [30.799515, 1.95355, 26.693003, 1.693082, 15.76592451],
+        [30.428387, 1.320891, 27.100122, 1.176412, 23.03625091],
+        [30.434181, 0.844936, 27.427097, 0.761451, 36.01951669],
+        [30.799423, 0.298323, 27.814808, 0.269414, 103.2418805],
+    ], dtype=float),
+    'ME Solar MESM-50W': np.array([
+        [23.415052, 11.967575, 5.922083, 3.026813, 1.956540758],
+        [23.112965, 5.560591, 12.551384, 3.019652, 4.156566386],
+        [23.116062, 5.030003, 13.841137, 3.0118, 4.595636164],
+        [23.115747, 4.57807, 15.125275, 2.995558, 5.049234567],
+        [23.115692, 4.439414, 15.540461, 2.984576, 5.2069242],
+        [23.114132, 4.291178, 15.992638, 2.96906, 5.386431396],
+        [23.116524, 4.171403, 16.356771, 2.951598, 5.541666243],
+        [23.114021, 4.05022, 16.715565, 2.929032, 5.706856395],
+        [23.115362, 3.948944, 17.007088, 2.905429, 5.853554845],
+        [23.114918, 3.798939, 17.418226, 2.862687, 6.084572292],
+        [23.114498, 3.65326, 17.789234, 2.811599, 6.327087896],
+        [23.114141, 3.503831, 18.138689, 2.749611, 6.596820059],
+        [23.114452, 3.3509, 18.464882, 2.676852, 6.8979839],
+        [23.11492, 3.15309, 18.834526, 2.569205, 7.330877061],
+        [23.116348, 2.903193, 19.264559, 2.419445, 7.962387655],
+        [23.115911, 2.630473, 19.65144, 2.236233, 8.787742601],
+        [23.116068, 2.396255, 19.971132, 2.070245, 9.64674809],
+        [23.123291, 1.748199, 20.552086, 1.553807, 13.22692329],
+        [23.136288, 0.80102, 21.464041, 0.743124, 28.8835255],
+        [23.140648, 0.309762, 21.969181, 0.29408, 74.70477761],
+    ], dtype=float),
+    'Renogy RNG-50DB-H': np.array([
+        [23.424229, 11.58681, 5.894531, 2.915734, 2.021628516],
+        [23.72953, 5.693411, 12.125871, 2.909352, 4.167894088],
+        [23.426764, 4.922009, 13.816704, 2.902917, 4.759593195],
+        [23.424603, 4.170353, 16.145973, 2.874516, 5.616936208],
+        [23.426395, 4.002863, 16.715784, 2.856222, 5.852410632],
+        [23.423584, 3.848856, 17.231913, 2.831469, 6.08585614],
+        [23.424973, 3.715216, 17.664825, 2.801653, 6.305143785],
+        [23.426899, 3.545583, 18.180428, 2.751547, 6.607347794],
+        [23.427967, 3.344581, 18.727219, 2.673501, 7.004754814],
+        [23.427265, 3.14929, 19.188766, 2.579515, 7.4389046],
+        [23.427248, 2.939382, 19.602093, 2.459445, 7.970128627],
+        [23.426811, 2.739423, 19.970377, 2.335244, 8.551730355],
+        [23.426422, 2.418296, 20.420042, 2.107949, 9.687161312],
+        [23.429234, 2.159837, 20.759869, 1.91376, 10.84768675],
+        [23.437695, 1.558239, 21.242069, 1.412265, 15.04113534],
+        [23.447426, 0.686716, 21.980999, 0.643768, 34.14428645],
+        [23.450655, 0.307881, 22.318256, 0.293014, 76.16788276],
+    ], dtype=float),
+}
 
-I_mod = np.array([solve_I_V_2_11(v, Iph_ref, Is0_ref, A, Rs, Rp, q, k, S, Sref, alpha, T, Tref, E_G0, k1, k2, ns) for v in V_mod])
-points_V, points_I = V_mod, I_mod
 
-## Piecewise PV Model
-coeffs = []
-for i in range(len(points_V) - 1):
-    a = (points_I[i + 1] - points_I[i]) / (points_V[i + 1] - points_V[i])
-    b = points_I[i] - a * points_V[i]
-    coeffs.append([a, b])
-coeffs = np.array(coeffs)
+def piecewise_coefficients(points_V, points_I):
+    points_V, points_I = np.asarray(points_V), np.asarray(points_I)
+    if len(points_V) < 2 or len(points_V) != len(points_I) or np.any(np.diff(points_V) <= 0):
+        raise ValueError("Piecewise interpolation requires increasing voltage points.")
+    a = np.diff(points_I) / np.diff(points_V)
+    b = points_I[:-1] - a * points_V[:-1]
+    return np.column_stack((a, b))
+
 
 def piecewise_pv_model(V_in, points_V, coeffs):
-    V_in = np.atleast_1d(V_in)
-    I_out = np.zeros_like(V_in)
-    for k_idx, V in enumerate(V_in):
-        found = False
-        for i in range(len(points_V) - 1):
-            tol = 1e-9
-            if (points_V[i] - tol <= V <= points_V[i + 1] + tol):
-                a, b = coeffs[i]
-                I_out[k_idx] = a * V + b
-                found = True
-                break
-        if not found: I_out[k_idx] = 0
-    return I_out
+    """I = a*V + b; return zero outside the defined segments, as in MATLAB."""
+    values = np.asarray(V_in, dtype=float)
+    result = np.zeros_like(values)
+    found = np.zeros(values.shape, dtype=bool)
+    for index, (a, b) in enumerate(coeffs):
+        mask = (~found) & (values >= points_V[index] - 1e-9) & (values <= points_V[index + 1] + 1e-9)
+        result = np.where(mask, a * values + b, result)
+        found |= mask
+    return float(result) if result.ndim == 0 else result
 
-## Provided Data: (R, V_test, I_test, V*, I*)
-mesures = np.array([
-    # ---------------------CS6P-250P---------------------
-    # --- Sref = 1000, Tref = 25, S = 765, T = 44.5 ---
-    [3.045769764, 35.788612, 10.870403, 22.410074, 6.806817],
-    [3.246175243, 36.241249, 10.316313, 23.793491, 6.772975],
-    [3.438202247, 35.789833, 9.643972, 24.939365, 6.720191],
-    [3.644886364, 35.790398, 9.090423, 26.093544, 6.627513],
-    [3.837445573, 35.790707, 8.701878, 26.855986, 6.529558],
-    [4.035450517, 35.789951, 8.216433, 27.721462, 6.36412],
-    [4.219364599, 35.790665, 7.880837, 28.259157, 6.222456],
-    [4.44773791, 36.241096, 7.531668, 28.892447, 6.004463],
-    [4.791118421, 35.791084, 6.966293, 29.474039, 5.736758],
-    [5.183246073, 35.791519, 6.47911, 30.01722, 5.433825],
-    [5.810344828, 35.791901, 5.848813, 30.604082, 5.001063],
-    [6.585987261, 35.791687, 5.091945, 31.287796, 4.451194],
-    [8.554054054, 35.795143, 4.074923, 31.859179, 3.626852],
-    [12.07089552, 35.795879, 2.980124, 32.497772, 2.705546],
-    [29.56637168, 36.24099, 1.421714, 33.463177, 1.312742],
-    
-    # ---------------- KC85TS - charge R ----------------- 
-    # --- Sref = 1000, Tref = 25, S = 1000, T = 25 ---
-    # [2.274319066,	22.960472,	10.105235,	12.117974,	5.333295],
-    # [2.784708249,	23.073624,	8.583916,	14.291578,	5.316794],
-    # [3.110204082,	23.067675,	7.747358,	15.696717,	5.271796],
-    # [3.346391753,	22.981272,	7.082609,	16.649363,	5.131176],
-    # [3.609341826,	22.994511,	6.609072,	17.420082,	5.006872],
-    # [3.981818182,	22.998159,	5.965241,	17.944386,	4.654398],
-    # [4.965147453,	23.00153,	4.872079,	18.909792,	4.005386],
-    # [5.648967552,	23.004377,	4.263049,	19.494135,	3.61255],
-    # [8.12704918,	23.008121,	3.123704,	20.138874,	2.73416],
-    # [11.1147541,	23.009827,	2.33631,	20.592268,	2.090842],
-    # [33.87096774,	23.009777,	1.063441,	21.18466,	0.979089],
-    
-    # --------------- KC85TS - charge R+L --------------- 
-    # ---- Sref = 1000, Tref = 25, S = 1000, T = 25 ----
-    # [2.111553785,	23.090778,	11.210976,	10.992171,	5.336891],
-    # [2.520710059,	22.955368,	9.275552,	13.190496,	5.32987],
-    # [2.990176817,	22.999069,	7.755183,	15.65108,	5.277474],
-    # [3.31352459,	22.993301,	7.134839,	16.572636,	5.142501],
-    # [3.611464968,	23.009609,	6.611756,	17.421389,	5.005994],
-    # [3.87032967,	23.01091,	5.902045,	18.000225,	4.61686],
-    # [4.431372549,	23.01825,	5.383958,	18.448944,	4.3152],
-    # [5.054200542,	23.015213,	4.812998,	18.967569,	3.966545],
-    # [5.615835777,	23.016911,	4.287896,	19.471916,	3.627488],
-    # [6.74137931,	23.026741,	3.620827,	19.864429,	3.123571],
-    # [8.453389831,	23.02433,	2.97291,	20.225323,	2.611501],
-    # [11.05978261,	23.027668,	2.328817,	20.59774,	2.083076],
-    # [38.29090909,	23.027573,	0.983892,	21.222818,	0.906781],
-    
-    # ---------------------KC200GT---------------------
-    # --- Sref = 1000, Tref = 25, S = 511, T = 54,3 ---
-    # [3.206030151,	29.875959,	9.626084,	13.112031,	4.224718],
-    # [3.914141414,	29.897739,	7.932604,	15.875197,	4.21208],
-    # [4.479899497,	30.066505,	6.832339,	18.182568,	4.131823],
-    # [5.492021277,	29.942114,	5.744508,	21.021599,	4.033073],
-    # [6.223163842,	30.058102,	5.098278,	22.375362,	3.795177],
-    # [7.027108434,	29.97991,	4.516749,	23.667114,	3.565669],
-    # [8.328719723,	29.98394,	3.9096,	24.400532,	3.181581],
-    # [10.57142857,	29.996906,	3.105203,	25.443676,	2.633864],
-    # [13.86702128,	29.997562,	2.43492,	26.335112,	2.137636],
-    # [26.11925709,	30.003111,	1.506433,	26.927042,	1.351986],
-    # [73.54054054,	30.003746,	0.800091,	27.395672,	0.733724],
-    
-    # --------------------- ME Solar MESM-50W ---------------------
-    # --- Sref = 1000, Tref = 25, S = 1000, T = 25 ---
-    # [2.564575646,	23.063789,	9.983421,	6.993855,	3.027369],
-    # [3.848920863,	22.905588,	6.327226,	10.947917,	3.02415],
-    # [5.124087591,	22.933201,	4.818062,	14.322508,	3.009032],
-    # [5.654676259,	22.961166,	4.267603,	15.97874,	2.969837],
-    # [6.296992481,	22.959677,	3.889386,	17.005857,	2.880805],
-    # [6.791505792,	22.976776,	3.596284,	17.847771,	2.793502],
-    # [7.541666667,	22.976551,	3.281668,	18.351051,	2.621022],
-    # [9.302439024,	22.984993,	2.730845,	19.306019,	2.293747],
-    # [11.36571429,	22.991455,	2.275814,	20.117302,	1.991315],
-    # [16.83606557,	23.000027,	1.686832,	20.741932,	1.521222],
-    # [26.70886076,	23.002243,	1.225857,	21.237494,	1.131808],
-    # [135.1875,	23.006454,	0.591647,	21.773888,	0.559949],
-    
-    # ---------------------Renogy RNG-50DB-H – 50 W---------------------
-    # --- Sref = 1000, Tref = 25, S = 1000, T = 25 ---
-    # [2.326860841,	24.066233,	9.584604,	7.320326,	2.915389],
-    # [3.95970696,	24.055067,	6.341636,	11.047176,	2.912366],
-    # [5.248175182,	24.049904,	4.764365,	14.633799,	2.899004],
-    # [6.222641509,	23.951168,	4.069241,	16.772703,	2.849638],
-    # [7.268,	23.976217,	3.52643,	18.451015,	2.713782],
-    # [8.852534562,	23.995972,	2.966523,	19.458088,	2.405523],
-    # [11,	24.001507,	2.436483,	20.484665,	2.079475],
-    # [15.10144928,	24.003086,	1.895893,	21.060669,	1.663485],
-    # [21.0990099,	24.005049,	1.487081,	21.505325,	1.332226],
-    # [75.55172414,	24.004025,	0.724881,	22.052029,	0.665934],
-   
-    # ---------------Uni-Solar ES-62T-----------------
-    # --- Sref = 1000, Tref = 25, S = 1000, T = 25 ---
-    # [1.944812362,	22.92971,	12.203246,	9.063915,	4.823837],
-    # [2.292410714,	23.088787,	10.189253,	10.677806,	4.712195],
-    # [2.689497717,	22.956436,	8.67457,	12.169374,	4.598453],
-    # [3.227941176,	23.073864,	7.521092,	13.542478,	4.414268],
-    # [3.970588235,	22.967014,	6.090907,	15.171309,	4.023467],
-    # [4.56851312,	22.983368,	5.228667,	16.019594,	3.644424],
-    # [5.514950166,	22.987225,	4.418077,	16.904531,	3.249001],
-    # [6.762452107,	22.989025,	3.577474,	17.930962,	2.790355],
-    # [10.0972973,	22.998974,	2.547448,	18.904875,	2.093971],
-    # [27.16438356,	23.000847,	1.247732,	20.006903,	1.085319],
-    
-    # ----------Vertex N TSM-NEG21C.20 695W------------
-    # --- Sref = 1000, Tref = 25, S = 200, T = 25 ---
-    # [4.45505618,	46.11351,	10.403705,	16.184828,	3.651472],
-    # [7.296829971,	45.855804,	6.508248,	25.680521,	3.644799],
-    # [9.152974504,	45.915001,	5.082425,	32.682323,	3.617673],
-    # [10.08235294,	45.960556,	4.736919,	34.661255,	3.572358],
-    # [10.65671642,	45.950321,	4.505582,	36.09742,	3.539472],
-    # [11.67823344,	45.95752,	4.166992,	37.399529,	3.391034],
-    # [13.18983051,	46.005436,	3.688589,	39.285419,	3.149796],
-    # [14.17437722,	46.008614,	3.468349,	40.211502,	3.031335],
-    # [18.66666667,	46.008034,	2.680178,	41.241325,	2.402495],
-    # [39.89719626,	46.058121,	1.369122,	42.957077,	1.276941],
-    # [199.9090909,	46.031281,	0.478006,	44.203873,	0.459029],
-])
 
-if mesures.size > 0:
-    R_data = mesures[:, 0]
-    V_violet = mesures[:, 1]
-    I_violet = mesures[:, 2]
-    V_noir = mesures[:, 3]
-    I_noir = mesures[:, 4]
-else:
-    R_data = V_violet = I_violet = V_noir = I_noir = np.array([])
-
-## Plotting (Figure Generation)
-plt.figure(figsize=(10, 8))
-
-# 1. Plot "Load Lines" FIRST
-if R_data.size == 0:
-    Rs_to_plot = np.array([0.1, 0.5] + list(range(1, 16)) + list(range(20, 55, 5)) + list(range(60, 210, 10)) + [300, 400, 500, 1000])
-    Rs_to_plot = np.sort(np.append(Rs_to_plot, np.inf))
-else:
-    Rs_to_plot = np.sort(np.unique(R_data))
-
-V_line = np.linspace(0, (np.max(V_violet) * 1.25) if V_violet.size > 0 else 50, 100)
-for r_val in Rs_to_plot:
-    if np.isinf(r_val):
-        plt.plot(V_line, np.zeros_like(V_line), 'k--', lw=0.8, color=(0.5, 0.5, 0.5))
-    elif r_val == 0:
-        plt.plot(np.zeros(100), np.linspace(0, (np.max(I_violet) * 1.1) if I_violet.size > 0 else 10, 100), 'k--', lw=0.8, color=(0.5, 0.5, 0.5))
+def main(argv=None):
+    parser = plot_arguments(__doc__)
+    parser.add_argument("--temperature", type=float, default=TEMPERATURE_C, help="Temperature in degC.")
+    parser.add_argument("--irradiance", type=float, default=IRRADIANCE, help="Irradiance in W/m^2.")
+    args = parser.parse_args(argv)
+    configure_plots()
+    T, G = args.temperature + 273.15, args.irradiance
+    if T <= 0 or G < 0:
+        parser.error("Temperature must exceed absolute zero and irradiance must be nonnegative.")
+    parameters = estimate_parameters(VOC_MOD_REF, ISC_MOD_REF, VMP_MOD_REF,
+                                     IMP_MOD_REF, NS, TREF)
+    print_parameters(parameters)
+    Voc_estimation = VOC_MOD_REF * (1 + BETA * (T - TREF))
+    Vmp_estimation = VMP_MOD_REF * Voc_estimation / VOC_MOD_REF
+    if Voc_estimation <= 0:
+        raise ValueError("The linear Voc estimate is nonpositive at this temperature.")
+    V_mod = FACTORS * Vmp_estimation
+    V_mod = np.unique(np.append(V_mod[(V_mod < Voc_estimation) & (V_mod >= 0)], Voc_estimation))
+    I_mod = solve_I_V_2_11(V_mod, *parameters, G=G, Gref=GREF, alpha=ALPHA,
+                          T=T, Tref=TREF, ns=NS)
+    coeffs = piecewise_coefficients(V_mod, I_mod)
+    measurements = np.asarray(MEASUREMENTS, dtype=float)
+    if measurements.size:
+        V_test, I_test, V_emu, I_emu, R_data = measurements.T
+        resistance_values = np.unique(R_data)
+        vmax, imax = V_test.max(), I_test.max()
     else:
-        plt.plot(V_line, V_line / r_val, 'k--', lw=0.8, color=(0.5, 0.5, 0.5))
+        # The MATLAB empty-measurements branch uses max([]), which cannot
+        # define valid plot limits. Fall back to model extents here.
+        V_test = I_test = V_emu = I_emu = np.array([])
+        resistance_values = np.sort(np.r_[.1, .5, np.arange(1, 16),
+                                         np.arange(20, 51, 5), np.arange(60, 201, 10),
+                                         300, 400, 500, 1000, np.inf])
+        vmax, imax = Voc_estimation, max(I_mod.max(), 1e-9)
+    fig, ax = plt.subplots(figsize=(12, 7), layout="constrained")
+    V_line = np.linspace(0, vmax * 1.25, 100)
+    load_handle = None
+    for r_val in resistance_values:
+        if np.isinf(r_val):
+            x, y = V_line, np.zeros_like(V_line)
+        elif r_val == 0:
+            x, y = np.zeros_like(V_line), np.linspace(0, imax * 1.1, 100)
+        else:
+            x, y = V_line, V_line / r_val
+        handle, = ax.plot(x, y, "--", color=(.5, .5, .5), linewidth=.8)
+        if load_handle is None:
+            load_handle = handle
+    V_plot = np.linspace(0, V_mod.max(), 500)
+    model_handle, = ax.plot(V_plot, piecewise_pv_model(V_plot, V_mod, coeffs),
+                            "r-", linewidth=2)
+    handles, labels = [model_handle, load_handle], ["Single-diode model I–V curve", "Load line"]
+    if measurements.size:
+        handles.append(ax.scatter(V_test, I_test, s=40, color="m"))
+        labels.append("Test point")
+        handles.append(ax.scatter(V_emu, I_emu, s=70, color="k", marker="s"))
+        labels.append("Emulation Points")
+    ax.set(xlabel=r"$V_{out}^{OT}\,[\mathrm{V}]$", ylabel=r"$I_{out}^{OT}\,[\mathrm{A}]$",
+           xlim=(0, 1.1 * Voc_estimation), ylim=(0, 1.1 * imax))
+    ax.legend(handles, labels, loc="upper left", fontsize=20, frameon=True)
+    ax.grid(False)
+    finish([("single_diode_emulator", fig)], args)
+    return parameters, V_mod, I_mod, coeffs
 
-# 2. Plot the I-V Model (P-V Curve)
-V_plot = np.linspace(0, np.max(points_V), 500) 
-I_plot = piecewise_pv_model(V_plot, points_V, coeffs)
-h_model, = plt.plot(V_plot, I_plot, 'r-', lw=2, label='I-V model')
 
-# 3. Plot "Test Points" (Purple Points)
-h_test_point = None
-if V_violet.size > 0:
-    h_test_point = plt.scatter(V_violet, I_violet, s=40, c='m', edgecolors='none', label='Test point')
-
-# 4. Plot "Intersections" (Black Points)
-h_intersection = None
-if V_noir.size > 0:
-    h_intersection = plt.scatter(V_noir, I_noir, s=70, c='k', marker='s', label='Intersection')
-
-## Plot Configurations
-plt.xlabel('Voltage (V)', fontsize=20, fontname='Times New Roman')
-plt.ylabel('Current (A)', fontsize=20, fontname='Times New Roman')
-plt.xlim([0, 40])
-if I_violet.size > 0: plt.ylim([0, 1.1 * np.max(I_violet)])
-plt.grid(False)
-plt.tick_params(axis='both', which='major', labelsize=15)
-
-# Legend handling
-handles, labels = plt.gca().get_legend_handles_labels()
-plt.legend(handles, labels, loc='upper left', fontsize=15, frameon=True)
-
-# Final formatting
-plt.tight_layout()
-plt.show()
+if __name__ == "__main__":
+    main()
