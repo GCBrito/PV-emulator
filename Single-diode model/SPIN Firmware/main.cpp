@@ -963,9 +963,9 @@ void loop_application_task() {
     if (mode == MODE_IDLE) spin.led.turnOff();
     else spin.led.turnOn();
 
-    uint32_t period = 500; // Print period (us)
+    uint32_t period = 500; // Print period 
     
-    // This block runs every 'period' (500us)
+    // This block runs every 'period' (500ms)
     if (elapsed >= period && measurementCount > 0) {
         
         // Calculate average values from the accumulators
@@ -1074,7 +1074,7 @@ void loop_application_task() {
             lastDutyCycle = currentDuty; 
         }
 
-        // Reset accumulators for the next 500us cycle
+        // Reset accumulators for the next 500ms cycle
         sumLowCurrent1 = sumLowVoltage1 = sumLowCurrent2 = sumLowVoltage2 =
             sumHighCurrent = sumHighVoltage = 0.0f;
         measurementCount = 0;
