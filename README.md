@@ -1,87 +1,113 @@
+# Open-source Photovoltaic Emulator
 
-This repository provides algorithms and resources to use an OwnTech board as a **photovoltaic (PV) emulator**.  It includes the following folders:
+This repository provides algorithms and resources to use an OwnTech board as a **photovoltaic (PV) emulator**.
 
-- **Single-diode model** — the most complete version of the PV emulator.   
-- **Simplified exponential model** — a simplified version of the PV emulator.
-- **Experimental Data** — datasets collected from laboratory tests.  
-- **Emulators comparison** — an algorithm to evaluate and compare the performance of the different emulators.  
+It includes the following folders:
 
-To better understand the algorithms presented in this repository, a set of text files has been organized.  
-The following reading order is recommended for readers who are not yet familiar with this work:
+- **[Single-diode model](Single-diode%20model/)** — the most recent implementation of the PV emulator, based on the conventional single-diode photovoltaic model.
+- **[Simplified exponential model](Simplified%20exponential%20model/)** — a previous implementation of the PV emulator based on a simplified exponential model.
+- **[Tests Data](Tests%20Data/)** — datasets collected during laboratory tests.
+- **[Emulators comparison](Emulators%20comparison/)** — scripts used to evaluate and compare the performance of the different emulator implementations.
+- **[Extras](Extras/)** — articles, lectures, and additional resources related to the PV emulator.
 
-1) [**Main README**](https://github.com/GCBrito/PV-emulator/blob/main/README.md) — introduces the concept of PV emulation and presents the OwnTech initiative.  
-2) [**Strategy**](https://github.com/GCBrito/PV-emulator/blob/main/Strategy.md) — explains the emulation strategy adopted by the proposed PV emulator.  
-4) [**Single-diode model README**](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model) — describes the single-diode model for PV modules and how it is implemented in the emulator.
-5) [**Tutorial**](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md) — provides instructions on how to use the emulator.
-6) [**Simplified exponential model README (optional)**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model) — describes the simplified exponencial model for PV modules and how it is implemented in the emulator.
-7) [**Basics of Power Electronics (optional)**](https://github.com/GCBrito/PV-emulator/blob/main/Basics%20of%20Power%20Electronics.md) — presents a classical Buck converter analysis aimed at readers who are not yet familiar with power electronics.
-8) [**Extras (optional)**](https://github.com/GCBrito/PV-emulator/tree/main/Extras) — Presents all articles and lectures related to the PV emulator.
+To better understand the algorithms presented in this repository, a set of text files has been organized. The following reading order is recommended for readers who are not yet familiar with this work:
 
-# _PV Emulator_
+1. **[Main README](README.md)** — introduces the concept of PV emulation and presents the OwnTech platform.
+2. **[Strategy](Strategy.md)** — explains the emulation strategy adopted by the proposed PV emulator.
+3. **[Single-diode model README](Single-diode%20model/)** — describes the single-diode model for PV modules and its implementation in the emulator.
+4. **[Tutorial](Tutorial.md)** — provides instructions on how to configure and operate the emulator.
+5. **[Simplified exponential model README](Simplified%20exponential%20model/)** *(optional)* — describes the simplified exponential model and its implementation.
+6. **[Basics of Power Electronics](Basics%20of%20Power%20Electronics.md)** *(optional)* — presents a classical Buck-converter analysis for readers who are not yet familiar with power electronics.
+7. **[Extras](Extras/)** *(optional)* — contains articles, lectures, and additional material related to the PV emulator.
 
-A PV module is a system composed of semiconductor materials capable of converting solar energy into electricity. From an electrical perspective, when environmental conditions are sufficient, connecting a load to a PV panel automatically subjects it to a DC (Direct Current) voltage and current. This principle is best illustrated by examining the current–voltage (I–V) plane, as shown in the figure below:
+# PV Emulator
 
-<p align="center">
-<img width="500" height="1000" alt="I-V plan" src="https://github.com/user-attachments/assets/93737631-7bcd-4a1c-89a6-baca75cddae9" />
-</p>
-  
-In this plane, the red curve represents the **I–V characteristic**, which describes the electrical behavior of a PV module (each module has its own curve) under given temperature and irradiance conditions. The blue line, known as the **load line**, corresponds to the resistive load R connected to the module. Its slope, defined by Ohm’s Law, is equal to the inverse of the resistance value. When a resistive load is connected to a PV panel, the operating point of the system is determined by the intersection between the module’s I–V curve and the load line. This point, denoted as (_V*_,_I*_), specifies the voltage _V*_ across the load and the current _I*_ flowing through it. In a real PV panel, this operating point is reached naturally, without external intervention. 
-
-It is also possible, however, to design a system capable of reproducing this same electrical behavior: a **PV emulator**. A PV emulator is a system that replicates the electrical characteristics of a real solar panel. In other words, for a given resistive load R, it delivers the same voltage and current (_V*_,_I*_) that the load would receive if it were directly connected to a PV module. The emulator proposed in this repository is based on OwnTech technology (read the section below) and can be represented by the following diagram:
+A PV module is a system composed of semiconductor materials capable of converting solar energy into electricity. From an electrical perspective, when environmental conditions are sufficient and a load is connected to a PV module, the voltage and current supplied to the load are determined by the interaction between the photovoltaic characteristic and the connected load. This behavior can be represented in the current–voltage ($I-V$) plane, as illustrated below.
 
 <p align="center">
-<img width="500" height="400" alt="Emulator" src="https://github.com/user-attachments/assets/88b33ebe-240c-4d69-b906-b29596ad4287" />
+  <img
+    src="https://github.com/user-attachments/assets/50484e57-8e17-4bc5-af89-bb46c07745dc"
+    alt="I-V characteristic and resistive load line"
+    width="650"
+  />
 </p>
 
-Unlike a real PV panel, though, on a PV emulator the operating point (_V*_,_I*_) cannot be achieved naturally, thus requiring a dedicated control strategy, described in [Strategy](https://github.com/GCBrito/PV-emulator/blob/main/Strategy.md). It should also be emphasized that, unlike an actual PV module, a PV emulator does not convert solar energy into electricity. Instead, it relies on an external electrical supply (referred to as the DC source in the figure) as its power input.
+In the $I-V$ plane, the red curve represents the photovoltaic characteristic, described by the photovoltaic voltage $V_{\mathrm{pv}}$ and current $I_{\mathrm{pv}}$, under given irradiance and temperature conditions. The blue line represents the load line associated with a resistive load $R_L$. According to Ohm's law, the load current is given by
 
-# _OwnTech_
+```math
+I_L(V_{\mathrm{out}})
+=
+\frac{V_{\mathrm{out}}}{R_L}
+```
 
-[OwnTech](https://owntech.io) is a company based in Toulouse whose mission is to **democratize power electronics** through open-source technologies.  
-The implementation of this PV emulator using the OwnTech solution is motivated by its strong commitment to openness, ensuring compatibility and access to **open-hardware** and **open-software** solutions.  
+and the slope of the resistive load line is therefore
 
-The CNRS-associated foundation supports the creation of a community where users can share implemented code as well as modifications to the hardware and software designs for specific applications.
+```math
+\frac{1}{R_L}
+```
 
-## Hardware Overview
+When a resistive load is connected directly to a PV module, the electrical operating point is determined by the intersection between the photovoltaic $I-V$ characteristic and the load line. In the proposed emulator, the voltage coordinate of this intersection is denoted by
 
-The **PCB** (Printed Circuit Board) used for the PV emulator consists of two distinct parts:
+```math
+V_{\mathrm{out}}^{\ast}
+```
 
-- **SPIN (Control Stage)** — handles control and measurement.
-- **TWIST (Power Stage)** — provides the power conversion stage.
+and corresponds to the output-voltage value that the emulator must reproduce for the identified load.
 
-All electronic schematics related to these boards are available on the foundation’s GitHub repository [OwnTech Foundation GitHub](https://github.com/owntech-foundation)
+A **photovoltaic emulator (PVE)** is a system designed to reproduce the electrical behavior of a real PV module without requiring a physical photovoltaic panel. For a given photovoltaic characteristic and connected load, the emulator must establish the corresponding operating point. The emulator implemented in this repository is based on the OwnTech platform and can be represented by the following simplified diagram.
 
 <p align="center">
-<img width="1000" height="500" alt="image" src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4" />
+  <img
+    src="https://github.com/user-attachments/assets/88b33ebe-240c-4d69-b906-b29596ad4287"
+    alt="Block diagram of the photovoltaic emulator"
+    width="550"
+  />
 </p>
 
-### SPIN Board
+Unlike a real photovoltaic module, the operating point is not established naturally by the emulator. A dedicated control strategy is therefore required to determine $V_{\mathrm{out}}^{\ast}$ from the connected load and the emulated photovoltaic characteristic and to regulate the converter output accordingly. The general strategy adopted in this project is described in **[Strategy.md](Strategy.md)**. It should also be emphasized that a PV emulator does not convert solar energy into electricity; instead, it relies on an external electrical supply, referred to as the **DC source**, which provides the energy delivered to the connected load.
 
-The **SPIN board** integrates an STM32 microcontroller that generates the PWM (Pulse Width Modulation) signals required to drive the switches present in the TWIST board, processes measurements from the sensors embedded in the Power Stage, and provides real-time access to input and output current and voltage values.
+# OwnTech
+
+[OwnTech](https://owntech.io) develops open-hardware and open-software solutions intended to make power electronics more accessible for education, research, and prototyping. The implementation of the PV emulators available in this repository using the OwnTech platform is motivated by its open architecture, which provides access to both the hardware design and the embedded software and facilitates modification, experimentation, and reproduction of the proposed systems.
+
+The OwnTech platform used for the PV emulator consists of two main boards: the **SPIN board**, responsible for control, computation, and measurement processing, and the **TWIST board**, which provides the power-conversion stage. The corresponding electronic schematics, hardware projects, and supporting resources are publicly available through the **[OwnTech Foundation GitHub](https://github.com/owntech-foundation)**.
 
 <p align="center">
-<img width="400" height="300" alt="Adobe Express - file" src="https://github.com/user-attachments/assets/090d9a0e-13fb-443f-be09-a5b10a50856c" />
+  <img
+    src="https://github.com/user-attachments/assets/7391a637-109c-41bc-a8a8-1d0e5023c9b4"
+    alt="OwnTech SPIN and TWIST boards"
+    width="750"
+  />
 </p>
 
-### TWIST Board
+## SPIN Board
 
-The **TWIST board** can be configured to operate in three main topologies:  
-- Synchronous **Buck converter**  
-- Synchronous **Boost converter**  
-- **Single-phase inverter**
+The **SPIN board** integrates an **STM32G474RE microcontroller** and provides the embedded control and measurement-processing functions required by the photovoltaic emulator. It acquires the voltage and current measurements provided by the power stage, executes the photovoltaic-emulation and control algorithms, and generates the PWM signals used to drive the switches of the TWIST board. USB-C connectivity also enables communication with a host computer for configuration and monitoring, while the real-time emulation and control calculations are executed directly on the embedded microcontroller.
 
 <p align="center">
-<img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/46f266ec-21d0-4aaf-af63-a85be75b0c3b" />
+  <img
+    src="https://github.com/user-attachments/assets/090d9a0e-13fb-443f-be09-a5b10a50856c"
+    alt="OwnTech SPIN control board"
+    width="450"
+  />
 </p>
 
-The TWIST converter supports the following input/output ranges:
+## TWIST Board
 
-- **V<sub>high</sub>**: 12 – 100 V  
-- **V<sub>low</sub>**: 12 – 72 V  
-- **I<sub>high, low</sub>**: up to 8 A per side  
+The **TWIST board** provides the power-conversion stage of the system. It is a reconfigurable bidirectional power converter rated at **300 W**, with two low-side channels operating from **12 V to 72 V** and rated at **8 A each**, and one high-side channel operating from **10 V to 110 V** and rated at **16 A**. Integrated voltage and current sensors provide the measurements required by the embedded control system.
 
-These ranges define the **power limits of the PV emulator** described in this repository.  
+<p align="center">
+  <img
+    src="https://github.com/user-attachments/assets/46f266ec-21d0-4aaf-af63-a85be75b0c3b"
+    alt="OwnTech TWIST power board"
+    width="450"
+  />
+</p>
 
-# _Reproducibility_
+The TWIST board can be configured for different power-converter topologies depending on the application. In the photovoltaic-emulator implementations provided in this repository, it is used as a Buck-based power-conversion stage. The exact topology, configuration, and control strategy associated with each emulator are described in the corresponding implementation documentation.
 
-The version of the photovoltaic emulator used to obtain the results reported in the EPJ Photovoltaics article “An open-source and open-hardware photovoltaic emulator for accessible PV experimentation” is archived as release v1.0.0. The repository contains the embedded implementation of the proposed photovoltaic emulator, the numerical models and post-processing scripts, and the experimental datasets used in the study. Instructions for configuring and operating the emulator are provided in the accompanying documentation.  
+# Reproducibility
+
+This repository is intended to make the photovoltaic-emulator implementations, experimental data, numerical tools, and associated documentation publicly available. Implementation-specific source code and explanations are provided in the **[Single-diode model](Single-diode%20model/)** and **[Simplified exponential model](Simplified%20exponential%20model/)** folders, while experimental datasets and comparison tools are provided in **[Tests Data](Tests%20Data/)** and **[Emulators comparison](Emulators%20comparison/)**.
+
+The electronic schematics and open-hardware design files of the OwnTech platform are maintained separately by OwnTech and are publicly available through the **[OwnTech Foundation GitHub](https://github.com/owntech-foundation)**. A versioned release of this repository will be used to identify the exact version associated with the corresponding scientific publication.
