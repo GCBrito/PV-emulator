@@ -338,8 +338,8 @@ void loop_application_task() {
     if (mode == MODE_IDLE) spin.led.turnOff();
     else spin.led.turnOn();
 
-    // Averaging calculation period (in us)
-    uint32_t period = 500; // Average over 500 us
+    // Averaging calculation period 
+    uint32_t period = 500; // Average over 500 ms
     if (elapsed >= period && measurementCount > 0) {
         // Calculate averages
         float32_t avgLowI1 = sumLowCurrent1 / measurementCount; // Average of low-side current 1 [A]
