@@ -82,8 +82,6 @@ The TWIST converter supports the following input/output ranges:
 
 These ranges define the **power limits of the PV emulator** described in this repository.  
 
+# _Reproducibility_
 
-
-
-
-
+The version of the photovoltaic emulator used to obtain the results reported in the EPJ Photovoltaics article “An open-source and open-hardware photovoltaic emulator for accessible PV experimentation” is archived as release v1.0.0. The repository contains the embedded implementation of the proposed photovoltaic emulator, the numerical models and post-processing scripts, and the experimental datasets used in the study. Instructions for configuring and operating the emulator are provided in the accompanying documentation.  
