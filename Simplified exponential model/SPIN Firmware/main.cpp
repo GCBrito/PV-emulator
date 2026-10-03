@@ -38,7 +38,7 @@ static float32_t voltageReferenceE = 0.0f; // Voltage reference in EMULATOR mode
 // Thresholds and persistence
 #define LOAD_RESISTANCE_THRESHOLD 0.02f // Relative variation of R > 2%
 #define DUTY_CYCLE_CHANGE_THRESHOLD 0.05f // Duty cycle variation > 0.05
-#define CURRENT_STABILITY_THRESHOLD 0.1f // Relative variation of Is of 10% for steady-state
+#define CURRENT_STABILITY_THRESHOLD 0.1f // Maximum relative variation of output current for quasi-steady-state detection
 #define REQUIRED_PERSISTENCE_COUNT 2 // Number of cycles to validate an event
 
 // Measured values
@@ -183,7 +183,7 @@ void computeSegments(Segment segments[N_POINTS - 1], float32_t V[N_POINTS], floa
 // Inputs:
 // - segments: Array of Segment structures representing the I-V curve.
 // - n: The number of segments.
-// - Vmpes: Measured voltage for the load line [V].
+// - Vmes: Measured voltage used to define the load line [V].
 // - Imes: Measured current for the load line [A].
 // - Vint: Reference to store the intersection voltage [V].
 // - Iint: Reference to store the intersection current [A].
@@ -332,7 +332,7 @@ void loop_communication_task() {
 // - void
 void loop_application_task() {
     static uint32_t elapsed = 0;
-    elapsed += 100; // Increment elapsed time by 100 µs (critical task period)
+    elapsed += 100; // Application task runs approximately every 100 ms
 
     // LED indicator based on mode
     if (mode == MODE_IDLE) spin.led.turnOff();
@@ -352,7 +352,7 @@ void loop_application_task() {
         float32_t avgLowV = (avgLowV1 + avgLowV2) * 0.5f; // Average low-side voltage [V]
 
         if (mode == MODE_POWER) {
-            printk("Averages (last %uus):\n", period);
+            printk("Averages (last %u ms):\n", period);
             printk("lowCurrent1: %f A\n", avgLowI1);
             printk("lowVoltage1: %f V\n", avgLowV1);
             printk("lowCurrent2: %f A\n", avgLowI2);
@@ -367,16 +367,16 @@ void loop_application_task() {
         if (mode == MODE_EMULATOR && !emulatorSteadyState) {
             updateHistory(currentHistory, avgLowI); // Update current history
             // Check for current stability (relative change less than threshold)
-            if (fabsf(currentHistory[0]) > 0.01f && (fabsf(currentHistory[1] - currentHistory[0]) / currentHistory[0]) < CURRENT_STABILITY_THRESHOLD) {
+            if (fabsf(currentHistory[0]) > 0.01f && (fabsf(currentHistory[1] - currentHistory[0]) / fabsf(currentHistory[0])) < CURRENT_STABILITY_THRESHOLD) {
                 float32_t Vint, Iint;
                 // Find the intersection between the load line and the I-V curve
                 findIntersection(segments, N_POINTS - 1, avgLowV, currentHistory[1], Vint, Iint);
                 voltageReferenceE = Vint; // Set the emulator voltage reference to the intersection voltage
                 // Display: test point, load line equation, intersection
-                printk("Test Point: V_test = %f V, I_test = %f A\n", avgLowV, avgLowI);
+                printk("Test Point: V_out_test = %f V, I_out_test = %f A\n", avgLowV, avgLowI);
                 float32_t loadLineSlope = (avgLowV != 0.0F) ? (avgLowI / avgLowV) : 0.0F; // Slope of the load line (I/V)
                 printk("Load Line Equation: I = %f * V\n", loadLineSlope);
-                printk("Intersection Found: Vo* = %f V, Io* = %f A\n", Vint, Iint);
+                printk("Intersection Found: V_out* = %f V, I_out* = %f A\n", Vint, Iint);
                 lastSteadyVoltage = Vint; // Store the last steady voltage [V]
                 lastSteadyCurrent = Iint; // Store the last steady current [A]
                 emulatorSteadyState = true; // Set steady-state flag
@@ -401,7 +401,7 @@ void loop_application_task() {
             }
             // If waiting for steady state, check current stability
             else if (waitingSteadyState) {
-                if (fabsf(currentHistory[0]) > 0.01f && (fabsf(currentHistory[1] - currentHistory[0]) / currentHistory[0]) < CURRENT_STABILITY_THRESHOLD) {
+                if (fabsf(currentHistory[0]) > 0.01f && (fabsf(currentHistory[1] - currentHistory[0]) / fabsf(currentHistory[0])) < CURRENT_STABILITY_THRESHOLD) {
                     waitingSteadyState = false; // Steady state reached
                     lastSteadyVoltage = candidateV;
                     lastSteadyCurrent = candidateI;
