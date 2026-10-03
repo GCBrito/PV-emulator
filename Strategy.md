@@ -1,116 +1,384 @@
-The physical configuration of the PV emulator described here is illustrated in the following schematic, where **_V<sub>in</sub>_** denotes the input voltage imposed by the DC source, **_I<sub>in</sub>_** the input current drawn from the DC source, **_V<sub>out</sub>_** the output voltage imposed by the emulator on the load, and **_I<sub>out</sub>_** the output current supplied by the emulator to this same load:
+# Emulation Strategy
+
+The physical configuration of the photovoltaic emulator is illustrated in the following schematic. The DC source provides the electrical energy required by the emulator, while the OwnTech power converter regulates the electrical quantities applied to the connected load. The source-side voltage and current are denoted by $V_{\mathit{in}}$ and $I_{\mathit{in}}$, respectively, while the output voltage and current are denoted by $V_{\mathit{out}}$ and $I_{\mathit{out}}$.
 
 <p align="center">
-<img width="500" height="400" alt="Emulator_parameters" src="https://github.com/user-attachments/assets/601a5e40-206e-4b3b-bcdc-aef52cd53dc9" />
+  <img
+    src="https://github.com/user-attachments/assets/f4c03241-04e5-4d4b-b164-15f3085446b1" 
+    alt="Physical configuration of the photovoltaic emulator"
+    width="550"
+  />
 </p>
 
-The PV emulator proposed in this repository relies heavily on the understanding of the **current–voltage (I–V) characteristic curve** of photovoltaic (PV) modules. For this reason, it is important to examine this curve in more detail.
+The emulation strategy relies on the photovoltaic current–voltage characteristic and on the electrical behavior imposed by the connected load. Its objective is to determine the operating point that would naturally result if the same load were connected to the photovoltaic module being emulated and then regulate the output of the power converter so that this operating condition is reproduced.
 
-# _I–V Characteristic Curve_  
+# Photovoltaic $I-V$ Characteristic
 
-As previously explained, the electrical behavior of a photovoltaic (PV) panel is generally represented by its I-V curve, which can be illustrated in the next figure:
+The electrical behavior of a photovoltaic module is commonly represented by its current–voltage characteristic, in which the photovoltaic voltage and current are denoted by $V_{\mathit{pv}}$ and $I_{\mathit{pv}}$, respectively. A typical $I-V$ characteristic is illustrated below.
 
 <p align="center">
-<img width="500" height="350" alt="image" src="https://github.com/user-attachments/assets/325602d3-1189-4b32-a344-fd1664ef48dd" />
+  <img
+    src="https://github.com/user-attachments/assets/325602d3-1189-4b32-a344-fd1664ef48dd"
+    alt="Photovoltaic I-V characteristic"
+    width="550"
+  />
 </p>
 
-In this figure, four key parameters can be identified:
+Four characteristic quantities are commonly provided in photovoltaic-module datasheets: the open-circuit voltage $V_{\mathit{oc}}$, the short-circuit current $I_{\mathit{sc}}$, the maximum-power-point voltage $V_{\mathit{mpp}}$, and the maximum-power-point current $I_{\mathit{mpp}}$. The maximum power point (MPP) corresponds to the operating condition at which the product of photovoltaic voltage and current is maximized. The $I-V$ characteristic depends on the photovoltaic module and on its operating conditions, particularly irradiance and cell temperature.
 
-- **_V<sub>oc</sub>_** - Open-circuit voltage  
-- **_I<sub>sc</sub>_** - Short-circuit current  
-- **_V<sub>mpp</sub>_** - Voltage at the maximum power point  
-- **_I<sub>mpp</sub>_** - Current at the maximum power point  
+This repository contains two different implementations for generating the photovoltaic characteristic:
 
-These parameters mainly depend on the intrinsic properties of the PV cells. However, external factors such as **shading, temperature, and environmental conditions** can also affect the overall performance of the module. The **maximum power point (MPP)**, represented by the coordinates (_V<sub>MPP</sub>_, _I<sub>MPP</sub>_) in the I–V plane, corresponds to the operating point at which the **product of current and voltage is maximized**. 
+- **[Simplified exponential model](Simplified%20exponential%20model/)**
+- **[Single-diode model](Single-diode%20model/)**
 
-This curve can be modeled using mathematical functions, and several models have been proposed in the literature. In this context, this repository considers two main mathematical models for I–V curves:
+The mathematical formulation and numerical procedures used to generate the photovoltaic characteristic are specific to each model and are therefore described in their corresponding documentation. Nevertheless, both implementations ultimately provide a numerical representation of the photovoltaic $I-V$ characteristic composed of linear segments. The emulation strategy described below operates on this piecewise-linear representation and is therefore common to both implementations.
 
-- [**Simplified exponential model**](https://github.com/GCBrito/PV-emulator/tree/main/Simplified%20exponential%20model)  
-- [**Single-diode model**](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model)
+# Power-Converter Configuration
 
-Regardless of which of these two models is considered, both are capable of reproducing the complete I–V characteristic curve of a specific PV module using only a few parameters that are readily available in the datasheet.  
-
-In this context, and with the goal of using the I–V curve in a numerical environment (for the emulation process), an algorithm was developed to reproduce the complete I–V characteristic curve by combining one of the previously mentioned mathematical models with linear interpolation.
-
-# _Emulation Strategy_  
-
-As presented before, the PV emulator proposed in this repository is based on **OwnTech technology** and is specifically configured to operate as two parallel-connected synchronous Buck converters (more information about this configuration can be found in [OwnTech's GitHub](https://github.com/owntech-foundation/examples/blob/main/TWIST/DC_DC/buck_voltage_mode/README.md)):
+The photovoltaic emulator is implemented using the OwnTech SPIN control board and TWIST power stage. In the configuration adopted for the emulator, the two low-side channels of the TWIST board are connected in parallel and operated as a two-phase interleaved synchronous Buck converter.
 
 <p align="center">
-<img width="600" height="500" alt="Board" src="https://github.com/user-attachments/assets/03e188e7-65ce-43b2-bf82-c58b0233bb4c" />
+  <img
+    src="https://github.com/user-attachments/assets/375fe16a-b458-409b-a89d-ef0d6607a71c"
+    alt="Interleaved synchronous Buck converter topology implemented on the TWIST board"
+    width="650"
+  />
 </p>
 
-The operation of the emulator relies on controlling the duty cycle **α**, defined as the ratio between the conduction time _t<sub>on</sub>_ of the electronic switches and the total switching period _T<sub>s</sub>_. The duty cycle is managed by a C++ algorithm pre-programmed in the **SPIN** control board, enabling the TWIST to operate as a PV emulator.
+The SPIN board executes the embedded control algorithm and generates the duty-cycle command $D$ applied to the power converter. An inner voltage-control loop regulates the output voltage, while the outer emulation algorithm identifies the connected load and determines the corresponding operating point on the photovoltaic characteristic.
 
-## Algorithm  
+The two low-side channels are measured independently by the OwnTech sensors. The instantaneous measured output voltage is calculated as the arithmetic mean of the two channel-voltage measurements
 
-The algorithm was developed in a **PlatformIO** environment within **Visual Studio Code** and then uploaded to the SPIN board via USB connection. It runs in loop and provides three distinct operating modes:
+```math
+V_{\mathit{out}}^{\mathit{OT}}
+=
+\frac{
+V_{\mathit{out},1}^{\mathit{OT}}
++
+V_{\mathit{out},2}^{\mathit{OT}}
+}{2}
+```
 
-- **Power Mode (key 'P')** - The board operates as two conventional parallel synchronous Buck converters regulated by a PID controller.  
-  - Open-loop mode: the PID tracks a predefined duty cycle reference.  
-  - Closed-loop mode: the PID regulates the output to follow a voltage reference.
+while the measured total output current is obtained by summing the two channel-current measurements
 
-- **Idle Mode (key 'I')** - Conversion is disabled, and no power is delivered to the load.  
+```math
+I_{\mathit{out}}^{\mathit{OT}}
+=
+I_{\mathit{out},1}^{\mathit{OT}}
++
+I_{\mathit{out},2}^{\mathit{OT}}
+```
 
-- **Emulator Mode (key 'E')** - The board reproduces the electrical behavior of a PV module supplying a resistive load R. In this mode, the user must first provide the characteristic parameters available in the datasheet of the target PV module. From these values, the algorithm locally approximates the I–V curve through linear interpolation.  
+The superscript $OT$ denotes quantities obtained from the sensors integrated into the OwnTech platform.
 
-The detailed operation of the **Emulator Mode** is illustrated by the following flowchart, which highlights the main tasks performed by the algorithm. It is important to note that the execution period of these tasks is fixed at **500 µs**.
+# Control Architecture
+
+The general control architecture of the photovoltaic emulator is illustrated below.
 
 <p align="center">
-<img width="300" height="800" alt="Flowchart" src="https://github.com/user-attachments/assets/5981152c-4af9-4a52-b3f1-e8d0abc3064a" />
+  <img
+    src="https://github.com/user-attachments/assets/59c4b581-5b8e-4870-b7a3-4f4934727ce5"
+    alt="Block diagram of the closed-loop control system"
+    width="750"
+  />
 </p>
 
-The nomenclature used in the flowchart is presented below:
+The DC source supplies the interleaved Buck converter, whose output is connected to the load. The OwnTech sensors provide the measured output voltage $V_{\mathit{out}}^{\mathit{OT}}$ and current $I_{\mathit{out}}^{\mathit{OT}}$. These quantities are processed by the outer emulation algorithm to identify the connected load and determine the corresponding photovoltaic operating point.
 
-- _**V<sub>out,0</sub> , I<sub>out,0</sub>**_ - Initial voltage and current test-point, used for calculating the load line.
-- _**V<sub>out</sub> , I<sub>out</sub>**_ - Output voltage and current, measured across the load by the TWIST sensors.    
-- _**R**_ - Load resistance, calculated from V<sub>s</sub> and I<sub>s</sub>.  
-- _**V<sub>out</sub>*</sup>**_ , _**I<sub>out</sub>*</sup>**_ - Voltage and current corresponding to the operating point on the I–V characteristic of the emulated PV module.
-- _**α**_ - Duty cycle, control variable used for tuning the output voltage.  
+The resulting voltage reference $V_{\mathit{out}}^{\mathit{ref}}$ is compared with the measured output voltage. The corresponding error is processed by the inner voltage controller, which generates the duty-cycle command $D$ applied to the PWM modulator.
 
-As illustrated by the flowchart, once the user activates the **Emulator Mode** — and assuming a load _R<sub>1</sub>_ connected to the emulator terminals — the duty cycle _α_ is adjusted so that the output voltage _V<sub>out</sub>_ reaches the reference value _V<sub>out,0</sub>_, establishing an operating point referred to as the **test point**.  The TWIST board are used to measure the voltage _V<sub>out,0</sub>_ and the current _I<sub>out,0</sub>_ imposed on the load at the test point.
+# PV-Emulation Sequence
 
-To reduce oscillations caused by noise and ripple, the algorithm records the sensor data from the board for a duration of 500 µs, and then computes their time-averaged values. This process provides more reliable estimates of _V<sub>out</sub>_ and _I<sub>out</sub>_.  
+When the PV-emulation mode is activated, the electrical characteristics of the connected load are initially unknown to the emulation algorithm. The system therefore begins with a **load-identification phase**, during which the output-voltage reference is initialized to a predefined test voltage denoted by $V_{\mathit{out}}^{\mathit{test}}$. The exact definition of this voltage depends on the selected emulator implementation and is provided in the corresponding model documentation.
 
-After two successive averaged values of the current _I<sub>out</sub>_ are obtained (i.e., after two full iterations of the previous step), the program enters a **waiting loop**. This loop continues until the relative error between the two most recent _I<sub>out</sub>_ measurements is less than **10%**. This condition ensures that steady-state operation has been reached.  
+Applying $V_{\mathit{out}}^{\mathit{test}}$ to the connected load produces a voltage–current pair that can be used to identify its electrical behavior. Since the instantaneous sensor measurements may contain switching ripple and noise, the emulation algorithm does not directly use individual samples. Instead, the measured output voltage and current are accumulated over consecutive averaging windows before being used by the outer emulation algorithm.
 
-Once this condition is satisfied, the most recent measured values of _V<sub>out</sub>_ and _I<sub>out</sub>_ (ideally equal to _V<sub>out,0</sub>_ and _I<sub>out,0</sub>_) are used to compute the equivalent load resistance _R<sub>1</sub>_, which is initially unknown. Graphically, this resistance corresponds to the **slope of the load line** that passes through the origin of the I–V plane and the test point measured at _V<sub>out</sub> = V<sub>out,0</sub>_.
+The real-time control task acquires measurements with a sampling period
 
-The mathematical expression of this load line is:
+```math
+T_c = 100~\mu\mathit{s}
+```
 
-$$
-I_{out,1} = \frac{1}{R_{1}} \cdot V_{out,1}
-$$
+while the measurements are accumulated over averaging windows of approximately
 
-From the load line equation, the algorithm identifies the intersection point ( _V<sub>out,1</sub><sup>*</sup>_, _I<sub>out,1</sub><sup>*</sup>_ ) between this line and the linearly-approximated I–V characteristic of the studied PV module. This point corresponds to the voltage and current that would be imposed across the load _R<sub>1</sub>_ if it were connected to a real PV module.  
+```math
+T_w = 500~\mathit{ms}
+```
 
-Once this point is determined, the voltage reference is updated, and the PID controller adjusts the duty cycle until _V<sub>out</sub>_ reaches the new target value _V<sub>out,1</sub><sup>*</sup>_ (closed loop).
+corresponding to approximately
 
-If, at a later stage, the load _R<sub>1</sub>_ connected to the system is replaced by a new load _R<sub>2</sub>_, the algorithm automatically adapts to this change.  This adaptability is ensured by a periodic task executed every 500 µs, during which a candidate resistance, _R<sub>candidate</sub>_, is estimated from the most recent measurements of _V<sub>out</sub>_ and _I<sub>out</sub>_. The relative error between _R<sub>candidate</sub>_ and the reference resistance _R<sub>1</sub><sup>*</sup>_ is then computed according to the following formula :
+```math
+N_w = 5000
+```
 
-$$
-Error = \frac{|R_{2}-R_{1}^{\ast}|}{R_{1}^{\ast}}
-$$
+samples per averaging window.
 
-If the error calculated according to this equation exceeds **2%** for two consecutive cycles of the periodic task (i.e., a total of 1000 µs), the algorithm detects a load change and reinitializes the voltage reference to duty cycle to _V<sub>out,0</sub>_, thereby **restarting** the adaptation process. It is important to note that this persistent error condition over two cycles prevents transient variations caused by noise or ripple from being mistaken for an actual load change.
+For the $w$-th averaging window, the averaged output voltage is defined as
 
-To facilitate the understanding of the Emulator Mode logic, the following figure illustrates the operation of the emulator in the I–V plane:
+```math
+\overline{V_{\mathit{out}}^{\mathit{OT}}}[w]
+=
+\frac{1}{N_w}
+\sum_{r=wN_w}^{(w+1)N_w-1}
+V_{\mathit{out}}^{\mathit{OT}}[r]
+```
+
+and the averaged output current is
+
+```math
+\overline{I_{\mathit{out}}^{\mathit{OT}}}[w]
+=
+\frac{1}{N_w}
+\sum_{r=wN_w}^{(w+1)N_w-1}
+I_{\mathit{out}}^{\mathit{OT}}[r]
+```
+
+where $r$ denotes the sampling instant of the real-time control loop and $w$ denotes the averaging-window index.
+
+# Quasi-Steady-State Validation
+
+After the test voltage has been applied, the output may require some time to reach a sufficiently stable condition. Therefore, the load-identification procedure is completed only after the averaged output current satisfies a quasi-steady-state criterion.
+
+The relative variation between two consecutive averaged current values is calculated as
+
+```math
+er_I
+=
+\frac{
+\left|
+\overline{I_{\mathit{out}}^{\mathit{OT}}}[w]
+-
+\overline{I_{\mathit{out}}^{\mathit{OT}}}[w-1]
+\right|
+}{
+\left|
+\overline{I_{\mathit{out}}^{\mathit{OT}}}[w-1]
+\right|
+}
+```
+
+and the measurements are considered sufficiently stable when
+
+```math
+er_I < \varepsilon_I
+```
+
+with
+
+```math
+\varepsilon_I = 0.10
+```
+
+This criterion prevents the load-identification procedure from being completed while the output current is still undergoing a significant transient.
+
+# Load Identification
+
+Once the quasi-steady-state condition is satisfied, the most recent averaged output voltage and current are used to estimate the equivalent resistive load.
+
+The load resistance is given by
+
+```math
+R_L
+=
+\frac{
+\overline{V_{\mathit{out}}^{\mathit{OT}}}
+}{
+\overline{I_{\mathit{out}}^{\mathit{OT}}}
+}
+```
+
+The corresponding load line in the $I-V$ plane is therefore expressed as
+
+```math
+I_L(V_{\mathit{out}})
+=
+\frac{V_{\mathit{out}}}{R_L}
+```
+
+This line passes through the origin and represents the electrical behavior of the connected resistive load. The load-identification procedure allows the emulator to determine $R_L$ directly from measured electrical quantities, so the resistance of the connected load does not need to be provided to the emulator in advance.
+
+# Operating-Point Determination
+
+Once $R_L$ has been identified, the corresponding load line is intersected with the piecewise-linear photovoltaic characteristic generated by the selected model.
+
+For the $k$-th linear segment, the photovoltaic current can be represented by
+
+```math
+I_{\mathit{pv},k}^{\mathit{seg}}(V)
+=
+a_k V + b_k
+```
+
+where $a_k$ and $b_k$ denote the slope and intercept of the segment.
+
+The desired operating point must simultaneously belong to the photovoltaic characteristic and to the load line. Therefore, its voltage coordinate $V_{\mathit{out}}^{\ast}$ must satisfy
+
+```math
+I_{\mathit{pv},k}^{\mathit{seg}}
+\left(
+V_{\mathit{out}}^{\ast}
+\right)
+=
+I_L
+\left(
+V_{\mathit{out}}^{\ast}
+\right)
+```
+
+Substituting the two line equations gives the candidate intersection voltage
+
+```math
+V_{\mathit{out}}^{\ast}
+=
+-
+\frac{
+b_k
+}{
+a_k-\frac{1}{R_L}
+}
+```
+
+The intersection is considered valid only when $V_{\mathit{out}}^{\ast}$ lies within the voltage interval associated with the corresponding segment. Once a valid intersection is found, $V_{\mathit{out}}^{\ast}$ becomes the desired output voltage associated with the operating point of the emulated photovoltaic module.
+
+The voltage reference generated by the outer emulation algorithm can therefore be summarized as
+
+```math
+V_{\mathit{out}}^{\mathit{ref}}
+=
+\begin{cases}
+V_{\mathit{out}}^{\mathit{test}}
+&
+\text{during load identification}
+\\
+V_{\mathit{out}}^{\ast}
+&
+\text{during PV emulation}
+\end{cases}
+```
+
+# Voltage Control
+
+The voltage reference $V_{\mathit{out}}^{\mathit{ref}}$ generated by the outer emulation algorithm is tracked by an inner voltage-control loop. The measured output voltage $V_{\mathit{out}}^{\mathit{OT}}$ is compared with the reference, and the resulting error is processed by the controller to generate the duty-cycle command $D$.
+
+The voltage-control error is expressed as
+
+```math
+e_V[r]
+=
+V_{\mathit{out}}^{\mathit{ref}}[r]
+-
+V_{\mathit{out}}^{\mathit{OT}}[r]
+```
+
+During the load-identification phase, the controller regulates the output voltage toward $V_{\mathit{out}}^{\mathit{test}}$. Once the photovoltaic operating point has been calculated, the reference is updated to $V_{\mathit{out}}^{\ast}$ and the converter is regulated toward this new value.
+
+During normal PV emulation, $V_{\mathit{out}}^{\mathit{ref}}$ remains equal to $V_{\mathit{out}}^{\ast}$ until a change in the connected load is detected.
+
+# Load-Change Detection
+
+After the initial operating point has been established, the emulator continues monitoring the connected load using the averaged output-voltage and output-current measurements.
+
+A candidate load resistance is calculated according to
+
+```math
+R_L^{\mathit{cand}}
+=
+\frac{
+\overline{V_{\mathit{out}}^{\mathit{OT}}}
+}{
+\overline{I_{\mathit{out}}^{\mathit{OT}}}
+}
+```
+
+and compared with the resistance associated with the previously accepted operating point, denoted by $R_L^{\mathit{prev}}$.
+
+The corresponding relative variation is
+
+```math
+er_{R_L}
+=
+\frac{
+\left|
+R_L^{\mathit{cand}}
+-
+R_L^{\mathit{prev}}
+\right|
+}{
+R_L^{\mathit{prev}}
+}
+```
+
+A possible load change is detected when
+
+```math
+er_{R_L} > \varepsilon_R
+```
+
+with
+
+```math
+\varepsilon_R = 0.02
+```
+
+To prevent isolated disturbances or measurement noise from being interpreted as an actual load change, the condition must remain satisfied for
+
+```math
+N_{\mathit{det}} = 2
+```
+
+consecutive evaluations.
+
+If the condition is not satisfied persistently, the detection counter is reset and normal PV emulation continues. If the condition is confirmed, the algorithm returns to the load-identification phase by restoring the voltage reference to $V_{\mathit{out}}^{\mathit{test}}$. The load is then identified again, and a new operating point $V_{\mathit{out}}^{\ast}$ is calculated.
+
+# Emulation Sequence in the $I-V$ Plane
+
+The complete load-identification and operating-point update sequence is illustrated below.
 
 <p align="center">
-<img width="500" height="1000" alt="Emulator_Working" src="https://github.com/user-attachments/assets/506dc0de-490d-4ad1-a723-992a6859d7c9" />
+  <img
+    src="https://github.com/user-attachments/assets/405709a5-dd1e-472e-b49a-4b787c7181d2"
+    alt="Load-line-based operating-point determination and update sequence"
+    width="700"
+  />
 </p>
 
-In this image, the numbered points represent the key steps of the Emulator Mode operation:
+The sequence can be described by considering an initially connected resistive load $R_{L1}$ followed by a change to a second load $R_{L2}$:
 
-1. The initial voltage reference _V<sub>out,0</sub>_ is applied on the load, generating a load line passing through the origin.  
-2. The PID then adjusts the duty cycle ( _α<sub>1</sub><sup>*</sup>_ ) to reach the operating point ( _V<sub>out,1</sub>*</sup>_, _I<sub>out,1</sub><sup>*</sup>_ ) on the I–V curve.  
-3. When the load changes, the operating point shifts to point (3). Since _α<sub>1</sub><sup>*</sup>_ remains constant, the reference voltage _V<sub>out,1</sub><sup>*</sup>_ does not change; only the current varies in response to the new load.  
-4. If the relative error between the previous load and the candidate load exceeds 2% for two consecutive cycles, the system detects a load change and reinitializes the voltage reference to _V<sub>out,0</sub>_ .  
-5. The emulation process restarts, allowing the system to operate again as a PV emulator.
+1. The voltage reference is initialized to $V_{\mathit{out}}^{\mathit{test}}$. The resulting averaged output voltage and current define the test point from which $R_{L1}$ is identified.
 
-The section [**Tutorial**](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md) was organized to support the use of the developed emulator in a laboratory environment.
+2. The load line corresponding to $R_{L1}$ is intersected with the photovoltaic $I-V$ characteristic, and the voltage reference is updated to
 
+```math
+V_{\mathit{out}}^{\ast}(R_{L1})
+```
 
+3. If the connected load changes from $R_{L1}$ to $R_{L2}$, the voltage reference initially remains equal to $V_{\mathit{out}}^{\ast}(R_{L1})$, while the output current changes according to the new electrical condition.
 
+4. Once the load-change criterion is satisfied, the emulator returns to the load-identification phase by applying $V_{\mathit{out}}^{\mathit{test}}$.
 
+5. The new load $R_{L2}$ is identified, its load line is intersected with the photovoltaic characteristic, and the new operating voltage is calculated
 
+```math
+V_{\mathit{out}}^{\ast}(R_{L2})
+```
+
+The emulator then resumes normal operation at the updated photovoltaic operating point.
+
+# Implementation-Specific Parameters
+
+The strategy described above is common to both photovoltaic-emulator implementations available in this repository. However, some numerical procedures and parameters depend on the selected photovoltaic model.
+
+These implementation-specific details include:
+
+- the mathematical model used to generate the photovoltaic characteristic
+- the number and distribution of points used to discretize the characteristic
+- the procedure used to calculate the photovoltaic current
+- the definition of $V_{\mathit{out}}^{\mathit{test}}$
+- model-specific initialization procedures and numerical parameters
+
+Further details are provided in the corresponding documentation:
+
+- **[Simplified exponential model](Simplified%20exponential%20model/)**
+- **[Single-diode model](Single-diode%20model/)**
+
+For practical instructions on configuring and operating the emulator, see **[Tutorial.md](Tutorial.md)**.
