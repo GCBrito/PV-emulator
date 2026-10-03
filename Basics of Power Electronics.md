@@ -1,155 +1,371 @@
-To better understand how the PV emulator operates, a brief overview on **power electronics** is helpful — especially since the OwnTech board is a power-electronics platform. This section presents a concise analysis of the **classical (non-synchronous) Buck converter** — rather than the synchronous Buck used on the OwnTech board — to cover the core concepts; the operating principles are essentially the same in both cases.
+# Basics of Power Electronics
 
-# _Buck Converter_ 
+A basic understanding of power electronics is useful for understanding the operation of the photovoltaic emulator, since the OwnTech TWIST board is a reconfigurable power-conversion platform.
 
-A **Buck (step-down) converter** is a **non-isolated DC–DC** circuit that reduces a higher DC input voltage to a lower DC output voltage. “Non-isolated” means **input and output share the same ground**—there is no transformer providing electrical isolation.
-The following figure shows a Buck converter composed of a DC input voltage _V<sub>in</sub>_, an inductor _L_, an electronic switch _S_ (in this overview, a MOSFET was considered), a diode _D<sub>i</sub>_, a capacitor _C_, and a load _R_. The voltage _v<sub>o</sub>_ is the output voltage associated with the load. Note that _v<sub>o</sub>_ consists of two components: a DC (average) component _V<sub>o</sub>_ and an AC component $$\tilde{v}_o
-$$, commonly referred to as the **output voltage ripple**.
+This document presents a concise analysis of the **classical non-synchronous Buck converter**. The photovoltaic emulator itself uses a synchronous Buck-based topology, in which the diode is replaced by an actively controlled semiconductor switch. However, the classical Buck converter provides a simpler introduction to the main operating principles, including switching, duty cycle, inductor behavior, and voltage conversion ratio.
 
-<p align="center">
-<img width="500" height="400" alt="Figura 6" src="https://github.com/user-attachments/assets/19b25527-5b48-4687-8a06-848ec98ace8a" />
-</p>
+# Buck Converter
 
-In this types of systems, operation is cyclical and relies on high-frequency **switching** of semiconductor devices (transistors) that act as electronic switches. The **switching period** _T<sub>s</sub>_ and **switching frequency** _f<sub>s</sub>_ describe the repetitive ON/OFF cycle and are related by _f<sub>s</sub> = 1/T<sub>s</sub>_.
+A **Buck converter**, also called a step-down converter, is a non-isolated DC–DC converter used to obtain a lower DC output voltage from a higher DC input voltage. In a non-isolated topology, the input and output share a common electrical reference and no transformer is used to provide galvanic isolation.
 
-## Analysis in CCM 
-
-To understand the general characteristics and behavior of the topology in **continuous conduction mode (CCM)** — meaning that, in steady state, the inductor current never falls to zero — a deeper analysis is required. This analysis describes the voltage and current waveforms in the main components and derives the **static conversion ratio** \(G\), defined as the ratio of the average output to the average input voltage:
-
-$$
-G = \frac{\{V}_o}{{V}_{in}}
-$$
-
-To conduct this analysis, the variables of interest associated with each element of the examined configuration are first defined : 
+The classical Buck converter considered here consists of an input DC source $V_{\mathit{in}}$, an electronic switch $S$, a freewheeling diode $D_i$, an inductor $L$, an output capacitor $C$, and a resistive load $R$.
 
 <p align="center">
-<img width="500" height="400" alt="Figura 7" src="https://github.com/user-attachments/assets/923d6b06-5eed-4fb7-9b37-4b06cfddaf7f" />
+  <img
+    src="https://github.com/user-attachments/assets/19b25527-5b48-4687-8a06-848ec98ace8a"
+    alt="Classical Buck converter"
+    width="550"
+  />
 </p>
 
-In Figure 10, the variables highlighted in **red** represent:
+The instantaneous output voltage can be separated into an average DC component and a ripple component:
 
-- _V<sub>in</sub>_ - average input DC voltage
-- _v<sub>DS</sub>_ - MOSFET drain–source voltage  
-- _i<sub>DS</sub>_ - MOSFET drain–source current  
-- _v<sub>GS</sub>_ - MOSFET gate–source (control) voltage
-- _v<sub>Di</sub>_ - diode voltage  
-- _i<sub>Di</sub>_ - diode current  
-- _v<sub>L</sub>_ - inductor voltage  
-- _i<sub>L</sub>_ - inductor current  
-- _V<sub>o</sub>_ - average output voltage across the load _R_ (output voltage)
+```math
+v_{\mathit{out}}(t)
+=
+V_{\mathit{out}}
++
+\widetilde{v}_{\mathit{out}}(t)
+```
 
-> **Modeling note.** For the sake of a simpler analysis, in a first moment, it's assumed that the output voltage is ripple-free, i.e., it remains constant and equal to its average value _V<sub>o</sub>_. This simplification is standard practice in introductory power-electronics analyses.
+where $V_{\mathit{out}}$ is the average output voltage and $\widetilde{v}_{\mathit{out}}$ represents the switching-induced output-voltage ripple.
 
-### First operating interval (MOSFET ON)
+Power converters operate through the high-frequency switching of semiconductor devices. The switching period $T_s$ and switching frequency $f_s$ are related by
 
-The first operating stage of the Boost converter occurs over $0 < t \le &alpha; \ T_s$, where &alpha; is called the duty cycle and is defined as
+```math
+f_s = \frac{1}{T_s}
+```
 
-$$
-&alpha; = \frac{t_{\mathrm{on}}}{T_s},
-$$
+The fraction of each switching period during which the main switch conducts is defined by the duty cycle
 
-i.e., the fraction of the total switching period $T_s$ during which the MOSFET $S$ conducts. In other words, $t_{\mathrm{on}}$ is the time the switch is ON within one period of the gate–source control signal $v_{GS}$.
+```math
+D
+=
+\frac{t_{\mathit{on}}}{T_s}
+```
 
-During this stage, the **MOSFET conducts** while the **diode is reverse-biased (OFF)** :
+with
+
+```math
+0 < D \leq 1
+```
+
+# Continuous Conduction Mode
+
+The following analysis assumes operation in **continuous conduction mode (CCM)**, meaning that the inductor current remains greater than zero throughout the entire switching period.
+
+The main electrical quantities considered in the analysis are illustrated below.
 
 <p align="center">
-<img width="500" height="400" alt="Figura 8" src="https://github.com/user-attachments/assets/429124e3-9b83-45d9-9c0b-32e20f53a4f6" />
+  <img
+    src="https://github.com/user-attachments/assets/923d6b06-5eed-4fb7-9b37-4b06cfddaf7f"
+    alt="Electrical variables of the Buck converter"
+    width="550"
+  />
 </p>
 
-During this half-cycle, since the diode behaves as an open circuit and the capacitor voltage equals the output voltage, the inductor voltage is:
+The relevant quantities are:
 
-$$
-v_L = V_{in} - V_o.
-$$
+- $V_{\mathit{in}}$ — input DC voltage
+- $v_{DS}$ — MOSFET drain–source voltage
+- $i_{DS}$ — MOSFET drain–source current
+- $v_{GS}$ — MOSFET gate–source control voltage
+- $v_{D_i}$ — diode voltage
+- $i_{D_i}$ — diode current
+- $v_L$ — inductor voltage
+- $i_L$ — inductor current
+- $V_{\mathit{out}}$ — average output voltage
 
-From $v_L = L \dfrac{di_L}{dt}$, the inductor current evolution in this interval follows:
+For a simplified introductory analysis, the output-voltage ripple is initially neglected. The output voltage is therefore assumed to remain constant over one switching period:
 
-$$
-i_L(t) = \frac{V_{in} - V_o}{L}  t + I_m
-$$
+```math
+v_{\mathit{out}}(t)
+\approx
+V_{\mathit{out}}
+```
 
-From this equation, it follows that the inductor current increases linearly during the first interval because, for a Buck converter, $V_o < V_{in}$ and thus $\tfrac{di_L}{dt} = \tfrac{V_{in}-V_o}{L} > 0$. Physically, the inductor is storing energy in its magnetic field during this stage. In this expression, $I_{m}$ denotes the minimum inductor current within one switching period (i.e., typically $i_L(0)=I_{m}$).
+## First Operating Interval: Switch ON
 
-Regarding the commutation elements in this interval (MOSFET ON, diode OFF), it follows that:
-- $i_D = 0$ (the diode is reverse-biased),
-- $v_D = -V_{in}$,
-- $i_{DS} = i_L$ (the MOSFET drain–source current equals the inductor current),
-- $v_{DS} = 0$ (an ideal switch in conduction has no voltage drop).
+During the first interval,
 
-### Second operating interval (MOSFET OFF)
+```math
+0 < t \leq D T_s
+```
 
-During the time interval $\alpha T_s < t \le T_s$, the converter enters the second operating phase, in which the **diode is ON** and the **MOSFET is OFF**:
+the MOSFET is ON and the diode is reverse-biased.
 
 <p align="center">
-<img width="500" height="400" alt="Figura 9" src="https://github.com/user-attachments/assets/4fee3c02-14c5-4b31-a185-bd774424597f" />
+  <img
+    src="https://github.com/user-attachments/assets/429124e3-9b83-45d9-9c0b-32e20f53a4f6"
+    alt="Buck converter during the MOSFET ON interval"
+    width="550"
+  />
 </p>
 
-From the analysis of this circuit, it is possible to determine that the inductor voltage is:
+Applying Kirchhoff's voltage law gives the inductor voltage
 
-$$
-v_L = -V_o.
-$$
+```math
+v_L
+=
+V_{\mathit{in}}
+-
+V_{\mathit{out}}
+```
 
-This leads to the inductor current:
+Using
 
-$$
-i_L(t) = -\frac{V_o}{L}\big(t - \alpha T_s\big) + I_M
-$$
+```math
+v_L
+=
+L\frac{di_L}{dt}
+```
 
-From this equation, it is possible to notice that the inductor current $i_L$ decreases linearly with slope $-V_o/L$. Physically, this means that the inductor releases the energy stored in its magnetic field during the first stage of operation. In this expression, $I_{M}$ denotes the maximum inductor current within one switching period (i.e., typically $i_L(\alpha T_s)=I_{M}$).
+the inductor-current slope is
 
-For the remaining circuit elements in this interval (diode ON, MOSFET OFF), one obtains:
+```math
+\frac{di_L}{dt}
+=
+\frac{
+V_{\mathit{in}}
+-
+V_{\mathit{out}}
+}{L}
+```
 
-Regarding the commutation elements in this interval (MOSFET ON, diode OFF), it follows that:
-- $i_D = i_L$,
-- $v_D = 0$,
-- $i_{DS} = 0$,
-- $v_{DS} = V_{o}$.
+and the current during this interval can be written as
 
-### Waveforms 
+```math
+i_L(t)
+=
+I_m
++
+\frac{
+V_{\mathit{in}}
+-
+V_{\mathit{out}}
+}{L}t
+```
 
-The following figure depicts the time evolution of voltages and currents in the Buck topology in CCM over one switching period _T<sub>s</sub>_:
+where $I_m$ denotes the minimum inductor current within the switching period.
+
+Since a Buck converter operates with
+
+```math
+V_{\mathit{out}} < V_{\mathit{in}}
+```
+
+the inductor current increases linearly during this interval. The inductor therefore stores energy in its magnetic field.
+
+For ideal switching devices:
+
+```math
+i_{D_i}=0
+```
+
+```math
+v_{D_i}=-V_{\mathit{in}}
+```
+
+```math
+i_{DS}=i_L
+```
+
+```math
+v_{DS}=0
+```
+
+## Second Operating Interval: Switch OFF
+
+During the second interval,
+
+```math
+D T_s < t \leq T_s
+```
+
+the MOSFET is OFF and the diode conducts, providing a path for the inductor current.
 
 <p align="center">
-<img width="250" height="700" alt="waveforms" src="https://github.com/user-attachments/assets/b952cd59-a616-414a-89d5-dfc7125ce586" />
+  <img
+    src="https://github.com/user-attachments/assets/4fee3c02-14c5-4b31-a185-bd774424597f"
+    alt="Buck converter during the MOSFET OFF interval"
+    width="550"
+  />
 </p>
 
-### Static Conversion Ratio (Buck)
+The inductor voltage is now
 
-After reviewing the time-domain behavior, an important quantity — the **static conversion ratio** (voltage gain) — can be computed. To proceed, note that in steady state (CCM) the inductor current is **periodic**:
+```math
+v_L
+=
+-
+V_{\mathit{out}}
+```
 
-$$
-i_L(t) = i_L(t+T_s),\quad \forall t.
-$$
+and therefore
 
-Using $v_L = L \dfrac{di_L}{dt}$ and integrating over one period:
+```math
+\frac{di_L}{dt}
+=
+-
+\frac{
+V_{\mathit{out}}
+}{L}
+```
 
-$$
-\int_{t_0}^{t_0+T_s} v_L(t)dt
-= L\int_{t_0}^{t_0+T_s} \frac{di_L}{dt}dt
-= L[i_L(t_0+T_s) - i_L(t_0)] = 0
-$$
+The inductor current during this interval is
 
-which implies that the **average inductor voltage is zero** over a switching period. Thus, the algebraic sum of the areas A<sup>+</sup> and A<sup>-</sup> illustrated on the previous image over one switching period is zero:
+```math
+i_L(t)
+=
+I_M
+-
+\frac{
+V_{\mathit{out}}
+}{L}
+\left(
+t-DT_s
+\right)
+```
 
-$$
-(V_{in}-V_o) \alpha T_s + (-V_o)(T_s - \alpha T_s) = 0.
-$$
+where $I_M$ denotes the maximum inductor current, reached at the end of the first switching interval.
 
-Dividing by T<sub>s</sub> and rearranging:
+The negative current slope indicates that the inductor releases part of the energy previously stored in its magnetic field.
 
-$$
-(V_{in}-V_o) \alpha - V_o (1-\alpha) = 0
-\Rightarrow
-V_o = \alpha V_{in}.
-$$
+For ideal switching devices:
 
-Therefore, the static gain is
+```math
+i_{D_i}=i_L
+```
 
-$$
-G = \frac{V_o}{V_{in}} = \alpha , \qquad 0 < \alpha \le 1.
-$$
+```math
+v_{D_i}=0
+```
 
-This expresses the step-down nature of the Buck converter: the output voltage is equal to or lower than the input.
+```math
+i_{DS}=0
+```
 
+```math
+v_{DS}=V_{\mathit{in}}
+```
 
+# Switching Waveforms
+
+The following figure illustrates the main voltage and current waveforms of the classical Buck converter operating in CCM over one switching period.
+
+<p align="center">
+  <img
+    src="https://github.com/user-attachments/assets/b952cd59-a616-414a-89d5-dfc7125ce586"
+    alt="Buck converter switching waveforms in continuous conduction mode"
+    width="350"
+  />
+</p>
+
+During the ON interval, the positive inductor voltage causes $i_L$ to increase linearly. During the OFF interval, the negative inductor voltage causes $i_L$ to decrease. Under steady-state CCM operation, these two variations compensate each other over every switching period.
+
+# Static Conversion Ratio
+
+The static conversion ratio of the Buck converter is defined as
+
+```math
+G
+=
+\frac{
+V_{\mathit{out}}
+}{
+V_{\mathit{in}}
+}
+```
+
+In steady state, the inductor current is periodic:
+
+```math
+i_L(t)
+=
+i_L(t+T_s)
+```
+
+Using the inductor relation
+
+```math
+v_L
+=
+L\frac{di_L}{dt}
+```
+
+and integrating over one complete switching period gives
+
+```math
+\int_{t_0}^{t_0+T_s}
+v_L(t)\,dt
+=
+L
+\left[
+i_L(t_0+T_s)
+-
+i_L(t_0)
+\right]
+=
+0
+```
+
+Therefore, the average inductor voltage over one switching period is zero. This property is known as **inductor volt-second balance**.
+
+For the Buck converter,
+
+```math
+\left(
+V_{\mathit{in}}
+-
+V_{\mathit{out}}
+\right)
+D T_s
+-
+V_{\mathit{out}}
+\left(
+1-D
+\right)
+T_s
+=
+0
+```
+
+Dividing by $T_s$ and rearranging gives
+
+```math
+V_{\mathit{out}}
+=
+D V_{\mathit{in}}
+```
+
+Consequently, the ideal static conversion ratio is
+
+```math
+G
+=
+\frac{
+V_{\mathit{out}}
+}{
+V_{\mathit{in}}
+}
+=
+D
+```
+
+with
+
+```math
+0 < D \leq 1
+```
+
+The ideal Buck converter therefore behaves as a step-down converter: the average output voltage is controlled by the duty cycle and cannot exceed the input voltage.
+
+# Relation to the PV Emulator
+
+The OwnTech TWIST power stage used by the photovoltaic emulator is based on a **synchronous Buck topology** rather than the classical diode-based converter analyzed above.
+
+In a synchronous Buck converter, the freewheeling diode is replaced by an actively controlled semiconductor switch. This reduces conduction losses and enables more flexible power-flow control, while the fundamental relation between duty cycle, inductor voltage, and output-voltage regulation remains similar.
+
+In the photovoltaic emulator, the duty-cycle command $D$ is generated by the embedded voltage controller so that the measured output voltage follows the reference $V_{\mathit{out}}^{\mathit{ref}}$ determined by the emulation algorithm.
+
+For details on how this reference is calculated from the photovoltaic characteristic and the connected load, see **[Strategy.md](Strategy.md)**.
