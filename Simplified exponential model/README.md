@@ -1,43 +1,170 @@
-# _Emulator's Principle_
+# Simplified Exponential Model PV Emulator
 
-This repository presents a C++ algorithm that allows the OwnTech board to perfom as PV emulator that can reproduce the behavior of any PV module, but only at the operating points **STC** (Standard Test Conditions — 1000 W/m² solar irradiance, AM1.5 spectrum and cell temperature of 25 °C) or **NOTC** (Normal Operating Test Conditions — 800 W/m² solar irradiance, AM1.5 spectrum, cell temperature of 20 °C and wind speed of 1 m/s). This limitation arises because the emulator is based on the **simplified exponential model**, a mathematical model that reconstructs the I–V characteristic curve of a PV module using only four parameters provided in the manufacturer’s datasheet: _V<sub>OC</sub>_, _I<sub>SC</sub>_, _V<sub>MPP</sub>_, and _I<sub>MPP</sub>_. However, since datasheets typically list these values only at STC or NOTC, the emulator cannot accurately represent the electrical behavior of a PV module under different irradiance or temperature conditions.
+This folder contains a previous implementation of the photovoltaic emulator based on a **simplified exponential model**.
 
-# _Simplified exponencial model_
+Unlike the [single-diode model](../Single-diode%20model/), this implementation does not explicitly model the influence of irradiance and temperature on the photovoltaic characteristic. Instead, the $I-V$ curve is generated directly from four characteristic values provided to the algorithm.
 
-The previously mentioned mathematical model can be described by the following two equations:
+The general load-identification and operating-point determination procedure used by the emulator is described in **[Strategy.md](../Strategy.md)**.
 
-$$
-I(V) = I_{SC}\left(1 - e^{\tfrac{V - V_{OC}}{c}}\right)
-$$
+# Simplified Exponential Model
 
-$$
-c = -\frac{V_{OC} - V_{MPP}}{\ln\left(1 - \tfrac{I_{MPP}}{I_{SC}}\right)}
-$$
+The photovoltaic characteristic is represented by the following exponential relation:
 
-Where:  
+```math
+I_{\mathit{pv}}
+\left(
+V_{\mathit{pv}}
+\right)
+=
+I_{\mathit{sc}}^{\mathit{ref}}
+\left[
+1-
+\exp
+\left(
+\frac{
+V_{\mathit{pv}}
+-
+V_{\mathit{oc}}^{\mathit{ref}}
+}{
+c
+}
+\right)
+\right]
+```
 
-- _V<sub>OC</sub>_ — open-circuit voltage [V]  
-- _I<sub>SC</sub>_ — short-circuit current a [A]  
-- _V<sub>MPP</sub>_ — voltage at the maximum power point [V]  
-- _I<sub>MPP</sub>_ — current at the maximum power point [A]
+The parameter $c$ is calculated from the maximum-power-point and open-circuit quantities according to
 
-Through these equations, the I–V characteristic curve of any PV module can be determined. The simplified exponential model differs from the [single-diode model](https://github.com/GCBrito/PV-emulator/tree/main/Single-diode%20model) because it does not account for the influence of temperature and irradiance on the PV panel. As a result, the emulator can only operate at STC or NOTC conditions, which represents a limited range of operation.
+```math
+c
+=
+-
+\frac{
+V_{\mathit{oc}}^{\mathit{ref}}
+-
+V_{\mathit{mpp}}^{\mathit{ref}}
+}{
+\ln
+\left(
+1-
+\frac{
+I_{\mathit{mpp}}^{\mathit{ref}}
+}{
+I_{\mathit{sc}}^{\mathit{ref}}
+}
+\right)
+}
+```
 
-# _Algorithms_
+where:
 
-The algorithms in this repository enable the implementation of the simplified exponencial model on the PV emulator.  To use this emulator, the user must specify the PV module to be replicated and define the desired operating point by providing the following input parameters, which are always available in manufacturers’ datasheets:
+- $V_{\mathit{oc}}^{\mathit{ref}}$ — open-circuit voltage
+- $I_{\mathit{sc}}^{\mathit{ref}}$ — short-circuit current
+- $V_{\mathit{mpp}}^{\mathit{ref}}$ — maximum-power-point voltage
+- $I_{\mathit{mpp}}^{\mathit{ref}}$ — maximum-power-point current
 
-- Vmp: voltage at the maximum power point [V] 
-- Imp: current at the maximum power point [A] 
-- Voc: open-circuit voltage [V] 
-- Isc: short-circuit current [A] 
+These four quantities define the photovoltaic characteristic reproduced by the emulator. They are normally obtained from the manufacturer datasheet at a specified reference condition, such as STC or NOCT.
 
-This folder contains one **MATLAB** script:
+Because irradiance and temperature are not explicit inputs of the simplified exponential model, the implementation does not internally recalculate the characteristic when these environmental conditions change. To emulate another operating condition, the corresponding values of $V_{\mathit{oc}}$, $I_{\mathit{sc}}$, $V_{\mathit{mpp}}$, and $I_{\mathit{mpp}}$ must therefore be supplied.
 
-- "tracer_simplified_exponential_model.m": Plots the emulated operating points as well as the PV emulator’s testing points and the load lines, and compares them to the theoretical I–V curve.
+# $I-V$ Curve Generation
 
-# _Usage instructions_
+Once the simplified exponential model has been defined from the four datasheet parameters, the photovoltaic characteristic is calculated in advance and stored as a piecewise-linear approximation for use by the real-time emulation algorithm.
 
-**To use the emulator**, edit `main.cpp` and set the parameters listed above **before** uploading the firmware to the SPIN board.  
-For step-by-step guidance, see the [Tutorial](https://github.com/GCBrito/PV-emulator/blob/main/Tutorial.md).
+The implemented version uses
 
+```math
+N_{\mathit{pt}} = 11
+```
+
+predefined voltage points distributed along the $I-V$ characteristic, with a greater concentration of points around the maximum-power and open-circuit regions. For each voltage point $V_{\mathit{pv},k}$, the corresponding current $I_{\mathit{pv},k}$ is calculated directly from the simplified exponential model.
+
+Consecutive voltage–current pairs are then connected by straight-line segments. For the $k$-th segment,
+
+```math
+I_{\mathit{pv},k}^{\mathit{seg}}
+\left(
+V_{\mathit{pv}}
+\right)
+=
+a_k V_{\mathit{pv}} + b_k
+```
+
+The resulting piecewise-linear characteristic is stored and subsequently used by the real-time emulation strategy described in **[Strategy.md](../Strategy.md)**.
+
+# Required Inputs
+
+To configure this implementation, the user must provide the following characteristic quantities for the PV module:
+
+<div align="center">
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Description</th>
+      <th>Unit</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>$V_{\mathit{mpp}}^{\mathit{ref}}$</td>
+      <td>Maximum-power-point voltage at the reference condition</td>
+      <td>V</td>
+      <td>Datasheet</td>
+    </tr>
+    <tr>
+      <td>$I_{\mathit{mpp}}^{\mathit{ref}}$</td>
+      <td>Maximum-power-point current at the reference condition</td>
+      <td>A</td>
+      <td>Datasheet</td>
+    </tr>
+    <tr>
+      <td>$V_{\mathit{oc}}^{\mathit{ref}}$</td>
+      <td>Open-circuit voltage at the reference condition</td>
+      <td>V</td>
+      <td>Datasheet</td>
+    </tr>
+    <tr>
+      <td>$I_{\mathit{sc}}^{\mathit{ref}}$</td>
+      <td>Short-circuit current at the reference condition</td>
+      <td>A</td>
+      <td>Datasheet</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+All four quantities must correspond to the same environmental operating condition.
+
+# Test Voltage Used for Load Identification
+
+During the load-identification phase described in **[Strategy.md](../Strategy.md)**, this implementation uses
+
+```math
+V_{\mathit{out}}^{\mathit{test}}
+=
+1.10 \cdot V_{\mathit{oc}}^{\mathit{ref}}
+```
+
+> **Safety warning:** The test voltage and resulting current must always remain within the admissible limits of the connected device, the OwnTech power-converter platform, and the external DC source. The factor $1.10$ should not be interpreted as a general operating requirement for other implementations.
+
+# Auxiliary Algorithm
+
+This folder contains the following MATLAB script:
+
+- `tracer_simplified_exponential_model.m` — generates the simplified exponential $I-V$ characteristic and can be used to visualize the emulated operating points, test points, and load lines.
+
+# Usage
+
+Before uploading the firmware to the SPIN board, the four PV-module parameters must be configured in `main.cpp`.
+
+The embedded algorithm then:
+
+1. calculates the exponential-model parameter $c$
+2. generates the photovoltaic current at 11 predefined voltage points
+3. constructs the corresponding piecewise-linear approximation
+4. executes the real-time emulation strategy described in **[Strategy.md](../Strategy.md)**
+
+For detailed instructions on configuring, compiling, uploading, and operating the emulator, see **[Tutorial.md](../Tutorial.md)**.
