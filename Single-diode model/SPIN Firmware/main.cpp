@@ -24,7 +24,7 @@
  * - Uses the 5 parameters (cast to 32-bit float) to run the emulator.
  * - Pre-calculates a piecewise linear model of the panel's I-V curve.
  * - In real-time, it finds the intersection of the load line and
- * the I-V curve to determine the operating point (V*, I*).
+ * the I-V curve to determine the operating point (V_out*, I_out*).
  * - A PID controller in the critical task loop adjusts the PWM
  * duty cycle to force the buck converter's output to match V*.
  * ====================================================================
@@ -81,8 +81,8 @@ const float32_t Isc_mod_ref = 8.87f; // Short-circuit current (A)
 const float32_t T_ref = 25.0f + 273.15f; // Reference Temperature (K)
 const float32_t G_ref = 1000.0f; // Reference Irradiance (W/m^2)
 
-const float32_t alpha = 0.0006f; // Temperature coefficient of Isc (%/K)
-const float32_t beta  = -0.0036f; // Temperature coefficient of Voc (%/K)
+const float32_t alpha = 0.0006f;  // Temperature coefficient of Isc [1/K]
+const float32_t beta  = -0.0036f; // Temperature coefficient of Voc [1/K]
 
 // --- CURRENT OPERATING CONDITIONS (32-bit float) ---
 static float32_t T = 25.0f + 273.15f; // Current module temperature (K)
@@ -310,11 +310,10 @@ int invertMatrix_d(const Matrix5x5 A, Matrix5x5 A_inv, int n) {
 
 
 // Un-scales the 'x' vector from the solver into physical parameters
-// x_scaled is [Iph_ref, log10(Is_ref), A, log10(Rs), Rp]
+// x_scaled is [Iph_ref, log10(Is_ref), A, log10(Rs), log10(Rp)]
 void unscale_params_d(const Vector5 x_scaled, double *Iph_param, double *Is_param, double *A_param, double *Rs_param, double *Rp_param) {
     *Iph_param = x_scaled[0];
     *A_param   = x_scaled[2];
-    *Rp_param  = x_scaled[4];
 
     // Convert from log10 scale back to linear scale
     *Rs_param = pow(10.0, x_scaled[3]);
@@ -330,7 +329,7 @@ void unscale_params_d(const Vector5 x_scaled, double *Iph_param, double *Is_para
 /**
  * @brief Calculates the residual vector F(x) for the 5-parameter solar cell model.
  * The goal of the solver is to find an 'x' such that F(x) = [0,0,0,0,0].
- * * @param x_scaled The scaled parameter vector: [Iph, log10(Is), A, log10(Rs), Rp]
+ * * @param x_scaled The scaled parameter vector: [Iph, log10(Is), A, log10(Rs), log10(Rp)]
  * @param F        The output residual vector (5x1).
  */
 void residuals_2_20_double(const Vector5 x_scaled, Vector5 F) {
@@ -466,7 +465,7 @@ double solve_parameters_levenberg_marquardt(const Vector5 initial_x_scaled, Vect
     const int n_params = 5;
     const double max_lambda = 1e10; 
 
-    // Bounds for scaled parameters: [Iph_ref, log10(Is_ref), A, log10(Rs), Rp]
+    // Bounds for scaled parameters: [Iph_ref, log10(Is_ref), A, log10(Rs), log10(Rp)]
     const double lower_bounds_scaled[5] = {0.5 * SOLVER_ISC_MOD_REF_d, -25.0, 0.1*ns, log10(1e-4), log10(10.0)};
     const double upper_bounds_scaled[5] = {1.5 * SOLVER_ISC_MOD_REF_d, -5.0, 3.0*ns, log10(10), log10(100000.0)};
 
@@ -632,11 +631,11 @@ void solve_parameters() {
 
     // Initial guess (x0), in double
     Vector5 initial_x_scaled_d;
-    initial_x_scaled_d[0] = (double)Isc_mod_ref; // Iph_ref_0 ~ Is_mod_ref
+    initial_x_scaled_d[0] = (double)Isc_mod_ref; // Iph_ref_0 ≈ Isc_mod_ref
     initial_x_scaled_d[1] = log10(1e-9);          //log10(Is_ref_0)
     initial_x_scaled_d[2] = ns;                  // A 
     initial_x_scaled_d[3] = log10(Rs_0);         // log10(Rs_0)
-    initial_x_scaled_d[4] = log10(Rp_0);                // Rp_0
+    initial_x_scaled_d[4] = log10(Rp_0);         // log10(Rp_0)
 
     printk("Starting 5-parameter model calculation (double-precision).\n");
 
@@ -797,8 +796,8 @@ void computeSegments(struct Segment segments[N_POINTS - 1], float32_t V[N_POINTS
  * @param n        Number of segments (N_POINTS - 1).
  * @param Vmes     The measured "Test Point" voltage.
  * @param Imes     The measured "Test Point" current.
- * @param Vint     Output: The intersection voltage (V*).
- * @param Iint     Output: The intersection current (I*).
+ * @param Vint Output: operating-point voltage (V_out*)
+ * @param Iint Output: operating-point current (I_out*)
  */
 void findIntersection(struct Segment segments[N_POINTS - 1], int n,
                       float32_t Vmes, float32_t Imes,
@@ -878,7 +877,7 @@ void setup_routine() {
     printk("| A       = %.6f |\n", A);
     printk("| Rs      = %.6f Ohms |\n", Rs);
     printk("| Rp      = %.6f Ohms |\n", Rp);
-    printk("| Conditions: S = %.1f W/m^2, T = %.1f K |\n", G, T - 273.15f); // Display T in Celsius
+    printk("| Conditions: G = %.1f W/m^2, T = %.1f °C |\n", G, T - 273.15f);
     printk("\n");
 
     // 7. Create and start all tasks
@@ -982,7 +981,7 @@ void loop_application_task() {
         if (mode == MODE_POWER) {
             printk("lowCurrent [Ilow1 + Ilow2]: %f A\n", avgLowI);
             printk("lowVoltage [(Vlow1 + Vlow2)/2]: %f V\n", avgLowV);
-            printk("highCurrent: %f V\n", avgHighI);
+            printk("highCurrent: %f A\n", avgHighI);
             printk("highVoltage: %f V\n", avgHighV);
         }
 
@@ -993,7 +992,7 @@ void loop_application_task() {
             updateHistory(currentHistory, avgLowI); // Update current history
             
             // Wait for current to be stable
-            if (fabsf(currentHistory[0]) > 0.01f && (fabsf(currentHistory[1] - currentHistory[0]) / currentHistory[0]) < CURRENT_STABILITY_THRESHOLD) {
+            if (fabsf(currentHistory[0]) > 0.01f && (fabsf(currentHistory[1] - currentHistory[0]) / fabsf(currentHistory[0])) < CURRENT_STABILITY_THRESHOLD) {
                 
                 // --- STABLE: Find the intersection ---
                 float32_t Vint, Iint;
@@ -1007,7 +1006,7 @@ void loop_application_task() {
 
                 printk("Test Point: V_test = %f V, I_test = %f A\n", avgLowV, avgLowI);
                 printk("Load Line Equation: I = %f * V\n", loadLineSlope);
-                printk("Intersection Found: Vo* = %f V, Io* = %f A\n", Vint, Iint);
+                printk("Intersection Found: V_out* = %f V, I_out* = %f A\n", Vint, Iint);
                 
                 // Store this as the last known good state
                 lastSteadyVoltage = Vint; 
@@ -1036,7 +1035,7 @@ void loop_application_task() {
             }
             // If we were waiting for stability after a manual change
             else if (waitingSteadyState) {
-                if (fabsf(currentHistory[0]) > 0.01f && (fabsf(currentHistory[1] - currentHistory[0]) / currentHistory[0]) < CURRENT_STABILITY_THRESHOLD) {
+                if (fabsf(currentHistory[0]) > 0.01f && (fabsf(currentHistory[1] - currentHistory[0]) / fabsf(currentHistory[0])) < CURRENT_STABILITY_THRESHOLD) {
                     waitingSteadyState = false; // Now stable
                     lastSteadyVoltage = candidateV;
                     lastSteadyCurrent = candidateI;
@@ -1074,13 +1073,13 @@ void loop_application_task() {
             lastDutyCycle = currentDuty; 
         }
 
-        // Reset accumulators for the next 500ms cycle
+        // Reset accumulators for the next approximately 500 ms averaging window
         sumLowCurrent1 = sumLowVoltage1 = sumLowCurrent2 = sumLowVoltage2 =
             sumHighCurrent = sumHighVoltage = 0.0f;
         measurementCount = 0;
         elapsed = 0;
     }
-    task.suspendBackgroundMs(100); // Suspend task for 100us
+    task.suspendBackgroundMs(100); // Suspend task for 100ms
 }
 
 /**
